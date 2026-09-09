@@ -89,6 +89,7 @@ export default function Home() {
               <div className="route" aria-hidden="true"><b>서울</b><i /><b>대전</b></div>
               <h3>딸네 집 가는<br />차편 찾기</h3>
               <p>정해 둔 노선과 시간대로 공개된 차편 정보를 찾아보는 예시예요. 실제 좌석 예약과는 구분됩니다.</p>
+              <a className="example-action" href="/bus">고속버스 조회 도구 열기 ↗</a>
             </article>
             <article className="example-card photo">
               <span className="example-type">기기 안에서 사진 처리</span>
