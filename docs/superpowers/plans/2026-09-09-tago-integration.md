@@ -30,11 +30,11 @@
 - Produces `createTagoClient({ serviceKey, fetchImpl?, baseUrl? })` and `TagoClient.getSchedules(query)`.
 - Returns normalized schedule rows with route, grade, departure/arrival time, places, and fare.
 
-- [ ] Write failing tests for URL encoding, JSON response normalization, empty results, and provider errors.
-- [ ] Run `pnpm vitest run packages/connectors/src/tago.test.ts` and confirm the missing module/API failure.
-- [ ] Implement the minimal connector and Zod response checks.
-- [ ] Run the focused test and the full test suite.
-- [ ] Commit and push `feat: TAGO 고속버스 커넥터 계약 구현`.
+- [x] Write failing tests for URL encoding, JSON response normalization, empty results, and provider errors.
+- [x] Run `pnpm vitest run packages/connectors/src/tago.test.ts` and confirm the missing module/API failure.
+- [x] Implement the minimal connector and Zod response checks.
+- [x] Run the focused test and the full test suite.
+- [x] Commit and push `feat: TAGO 고속버스 커넥터 계약 구현`.
 
 ### Task 2: 서버 조회 API
 
@@ -46,11 +46,11 @@
 - Provides `GET /api/tago/schedules?depTerminalId=...&arrTerminalId=...&depPlandTime=...`.
 - Reads only `TAGO_SERVICE_KEY` on the server and returns a stable `{ status, data?, error? }` envelope.
 
-- [ ] Write failing route tests for required parameters, missing key, success, empty response, and upstream failure.
-- [ ] Run the focused route test and confirm failure before implementation.
-- [ ] Implement Node.js Route Handler with strict input validation, 30-second timeout, and safe error mapping.
-- [ ] Run route tests, typecheck, and build.
-- [ ] Commit and push `feat: TAGO 서버 조회 API 연결`.
+- [x] Write failing route tests for required parameters, missing key, success, empty response, and upstream failure.
+- [x] Run the focused route test and confirm failure before implementation.
+- [x] Implement Node.js Route Handler with strict input validation, 30-second timeout, and safe error mapping.
+- [x] Run route tests, typecheck, and build.
+- [x] Commit and push `feat: TAGO 서버 조회 API 연결`.
 
 ### Task 3: 한국어 버스 조회 화면
 
@@ -65,11 +65,11 @@
 - Provides a mobile-first form for terminal IDs and date, plus result/empty/error states and source timestamp.
 - Never displays a reservation, seat, or payment action.
 
-- [ ] Write an E2E test that verifies the form and missing-key state without contacting TAGO.
-- [ ] Run the focused E2E test and confirm the page is absent.
-- [ ] Implement the page and link it from the existing example card.
-- [ ] Run focused E2E, full E2E, typecheck, and build.
-- [ ] Commit and push `feat: 고속버스 조회 화면 추가`.
+- [x] Write an E2E test that verifies the form and missing-key state without contacting TAGO.
+- [x] Run the focused E2E test and confirm the page is absent.
+- [x] Implement the page and link it from the existing example card.
+- [x] Run focused E2E, full E2E, typecheck, and build.
+- [x] Commit and push `feat: 고속버스 조회 화면 추가`.
 
 ### Task 4: 연동 상태 문서화
 
@@ -77,7 +77,7 @@
 - Modify: `SDD.md`
 - Modify: `README.md`
 
-- [ ] Record the verified TAGO endpoint, operations, response fields, and current environment status without any secret value.
-- [ ] Record that live 10-case acceptance is pending until a rotated key is entered and verified.
-- [ ] Run secret scan and documentation link checks.
+- [x] Record the verified TAGO endpoint, operations, response fields, and current environment status without any secret value.
+- [x] Record that live 10-case acceptance is pending until a rotated key is entered and verified.
+- [x] Run secret scan and documentation link checks.
 - [ ] Commit and push `docs: TAGO 연동 상태와 설정 방법 정리`.
