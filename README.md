@@ -100,7 +100,7 @@ pnpm install --frozen-lockfile
 pnpm dev
 ```
 
-[로컬 시작 화면](http://localhost:3000)이 열립니다. 고속버스 조회 화면은 `/bus`, 사진 도구는 `/photo`에서 확인할 수 있습니다. `/api/tago/terminals`, `/api/tago/grades`, `/api/tago/cities`는 화면의 코드 선택과 후속 도시 선택에 사용하는 서버 조회 API입니다. TAGO 키가 없으면 조회 대신 설정 필요 상태를 표시하며, 가짜 시간표를 반환하지 않습니다.
+[로컬 시작 화면](http://localhost:3000)이 열립니다. 고속버스 조회 화면은 `/bus`, 사진 도구는 `/photo`에서 확인할 수 있습니다. `/api/tago/terminals`, `/api/tago/grades`, `/api/tago/cities`는 화면의 코드 선택과 후속 도시 선택에 사용하는 서버 조회 API입니다. `/api/supabase/health`는 서버 배포에서 `buttons` 테이블 연결만 확인하는 점검 경로입니다. TAGO 키가 없으면 조회 대신 설정 필요 상태를 표시하며, 가짜 시간표를 반환하지 않습니다.
 
 ```sh
 pnpm typecheck

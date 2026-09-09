@@ -224,7 +224,7 @@ if (-not (Test-Path -LiteralPath apps/web/.env.local)) {
 
 `packages/connectors`와 `GET /api/tago/schedules`, `/api/tago/terminals`, `/api/tago/grades`, `/api/tago/cities`는 이 계약을 기준으로 구현했다. 서비스 키가 없으면 `NOT_CONFIGURED`, 정상 응답에 결과가 없으면 `EMPTY`, 공급자 인증·응답 계약 오류는 `NEEDS_ATTENTION`, 네트워크·HTTP 오류는 `FAILED`로 표시한다. 응답에는 예약·결제·잔여석을 지원하지 않는다는 출처 경계를 포함하며, 요청 URL·서비스 키를 브라우저 응답이나 오류 메시지에 노출하지 않는다. 합성 응답 테스트와 UI 상태 검증, Production에서 실제 터미널·등급·시간표 조회까지 완료했으며, 실제 키로 10개 조건을 조회하는 AC-09 검증은 아직 실행하지 않았다.
 
-Supabase SQL Editor에 `supabase/migrations/20260909210000_initial_schema.sql`을 적용했다. Table Editor에서 `buttons`, `workflow_versions`, `share_links`, `runs`가 생성되었고, `pg_class`·`pg_policies` 확인 쿼리로 네 테이블의 RLS 활성화와 테이블별 소유자 정책 4개를 확인했다. 이 단계에서는 인증 화면과 애플리케이션의 DB 호출 코드를 아직 연결하지 않았다.
+Supabase SQL Editor에 `supabase/migrations/20260909210000_initial_schema.sql`을 적용했다. Table Editor에서 `buttons`, `workflow_versions`, `share_links`, `runs`가 생성되었고, `pg_class`·`pg_policies` 확인 쿼리로 네 테이블의 RLS 활성화와 테이블별 소유자 정책 4개를 확인했다. `GET /api/supabase/health`는 서버 Secret key로 `buttons` 테이블 존재만 확인하고 행·키를 반환하지 않는다. 이 단계에서는 인증 화면과 애플리케이션의 DB 호출 코드를 아직 연결하지 않았다.
 
 **비용·AI 데이터 조건:** Gemini 무료 API는 제품 개선에 입력·출력을 사용할 수 있으므로 개발용 합성 기록에 한정한다. 실제 사용자 기록은 제품 개선에 사용하지 않는 유료 API 조건을 적용하고 9.2의 정제·최소 전송을 유지한다. AI Studio에서 키를 만든 뒤 해당 프로젝트의 할당량·결제 상태를 확인한다. Supabase 무료 플랜으로 개발을 시작할 수 있으나 심사 기간의 중단·할당량 조건을 확인해야 한다. Vercel Hobby는 개인·비상업 용도로 제한되므로 사업 운영에는 적합한 유료 플랜을 선택한다. 유료 전환·도메인 구매는 사용자가 별도로 진행한다.
 
@@ -522,3 +522,4 @@ Tasks.AI는 시범 기반 웹 자동화를, Saath는 부모님의 생활 요청�
 | 0.5 | TAGO 계약 확인, 서버 조회 API·한국어 조회 화면과 상태 경계 구현 |
 | 0.6 | TAGO 터미널·등급·도시 코드 조회 API와 터미널·등급 선택 화면 추가 |
 | 0.7 | Supabase MVP 저장 스키마·RLS 적용과 실제 프로젝트 점검 기록 |
+| 0.8 | Supabase 서버 연결 헬스 API와 배포 검증 경계 추가 |
