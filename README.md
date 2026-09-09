@@ -112,6 +112,15 @@ pnpm test:e2e
 
 Linux CI에서 브라우저 시스템 의존성까지 설치할 때는 `pnpm exec playwright install --with-deps chromium`을 사용합니다.
 
+커밋 전에 로컬 비밀 검사 훅을 한 번 설치합니다. 훅은 스테이징된 환경 파일과 알려진 비밀 패턴을 검사하며, 검사기를 찾지 못하면 커밋을 멈춥니다.
+
+```sh
+pnpm secrets:install-hooks
+pnpm secrets:test
+```
+
+개발 키는 `apps/web/.env.local`에만 입력합니다. 이 파일은 Git에서 제외되어 있고, 배포할 때는 Vercel 환경변수에서 키별로 **Secret** 유형을 선택합니다. 실제 키를 커밋·채팅·로그에 넣지 않습니다. 상세한 환경별 분리와 유출 대응은 [SDD의 비밀 키 보관과 유출 방지](./SDD.md#65-비밀-키-보관과-유출-방지)를 따릅니다.
+
 | 경로 | 현재 역할 |
 | --- | --- |
 | `apps/web` | 한국어 시작 화면과 환경변수 예제 |

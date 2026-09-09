@@ -1,0 +1,8 @@
+#!/bin/sh
+
+repo_root=$(git rev-parse --show-toplevel) || {
+  echo "비밀 검사 실패: Git 저장소 루트를 확인할 수 없습니다." >&2
+  exit 1
+}
+
+exec node "$repo_root/scripts/check-secrets.mjs"

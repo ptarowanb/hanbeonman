@@ -6,7 +6,7 @@
 
 | 항목 | 내용 |
 | --- | --- |
-| 버전 | 0.3 |
+| 버전 | 0.4 |
 | 작성일 | 2026-09-09 |
 | 상태 | 개발 기반 구현. 실제 인증·AI·외부 조회 연동, 제품 성능과 사업 가설은 미검증 |
 | 문서 역할 | Spec-Driven Development를 위한 단일 제품·기술·검증 기준 |
@@ -195,10 +195,12 @@ flowchart TD
 
 Supabase 회원가입만으로 DB가 생성되지는 않으므로 프로젝트까지 생성한다. URL과 Publishable key는 프로젝트 Connect 화면에서 확인한다. 서버의 관리용 키는 프로젝트 API Keys의 Secret key를 사용하며 클라이언트 번들에 포함하지 않는다. DB 비밀번호는 이 웹 앱의 환경변수에 넣지 않는다. 필요하면 마이그레이션 도구의 보안 입력에 별도로 사용한다.
 
-웹 앱 설정 파일은 `apps/web/.env.local`이다. 준비한 예제는 다음 순서로 복사한 뒤 로컬 편집기로 입력한다.
+웹 앱 설정 파일은 `apps/web/.env.local`이다. 파일이 없을 때만 예제를 복사한 뒤 로컬 편집기로 입력한다. 이미 입력한 값을 덮어쓰지 않는다.
 
 ```powershell
-Copy-Item -LiteralPath apps/web/.env.example -Destination apps/web/.env.local
+if (-not (Test-Path -LiteralPath apps/web/.env.local)) {
+  Copy-Item -LiteralPath apps/web/.env.example -Destination apps/web/.env.local
+}
 ```
 
 | 변수 | 공개 여부 | 용도 |
@@ -223,6 +225,26 @@ Copy-Item -LiteralPath apps/web/.env.example -Destination apps/web/.env.local
 지원 사이트의 기록을 공개 API 호출로 변환하려면 사이트 이벤트와 API의 의미를 연결하는 매핑을 사전에 구현해야 한다. 이 매핑은 지원 범위이며 AI가 새 외부 연동을 자동 완성했다고 표현하지 않는다. 응답 형식이 바뀌면 어댑터 검증에 실패해야 하며, 이전 조건과 다른 요청을 만들어 회피하지 않는다.
 
 Chrome 확장은 사용자가 요청한 지원 페이지에만 필요한 권한으로 동작한다. 공유 링크 자체에는 외부 앱을 조작할 권한이 없다. 모바일 앱 전체 제어는 이 구조의 일부가 아니다.
+
+### 6.5 비밀 키 보관과 유출 방지
+
+실제 키는 공개·비공개 저장소 모두에 커밋하지 않는다. Git에는 변수 이름과 빈 예제만 두고, 실행 환경에서 값을 주입한다. Git에서 제외된 로컬 파일도 암호화된 금고는 아니므로 개인 OS 계정으로 접근을 제한하고 원본 키와 DB 비밀번호는 비밀번호 관리자에 보관한다.
+
+| 위치 | 보관할 내용 | 적용 방법 |
+| --- | --- | --- |
+| Git | 빈 키 예제, 비밀이 아닌 모델 이름, 설정·검사 코드 | `.env`와 `.env.*` 제외. `.env.example`만 예외이며 키 값은 비워 둠 |
+| 개발 PC | 개발용 키 | `apps/web/.env.local`에 편집기로 입력. 채팅·명령줄 인수에 값을 붙여넣지 않음 |
+| Vercel Development·Preview | 별도 개발 프로젝트의 키 | 프로젝트 Environment Variables의 Type을 **Secret**으로 등록 |
+| Vercel Production | 운영 프로젝트의 전용 키 | **Secret**으로 등록하고 운영 환경에만 적용. 변경 후 재배포 |
+| GitHub Actions | 이 단계에서는 외부 서비스 키가 필요 없음 | 합성 데이터로 검사. 향후 필요한 CI 전용 값만 GitHub Secrets에 최소 범위로 등록 |
+
+Vercel의 Secret은 저장 후 값을 다시 읽을 수 없는 설정 유형이다. URL·모델명·Supabase Publishable key 같은 공개 설정은 Config를 사용해도 되지만, 실제 설정값은 이 저장소의 예제에 넣지 않는다. 운영 키를 Preview·개발 환경에 재사용하지 않으며 신뢰하지 않는 PR 코드에 키를 주입하지 않는다. [Vercel 환경변수 유형과 범위](https://vercel.com/docs/environment-variables/sensitive-environment-variables).
+
+**애플리케이션 구현 규칙:** Gemini·TAGO·Supabase Secret key를 사용하는 코드는 Next.js의 `server-only` 모듈로 분리하고 서버에서만 읽는다. 이 모듈은 실제 연동을 구현할 때 추가한다. 비밀 변수에 `NEXT_PUBLIC_` 접두사를 붙이거나 `next.config`의 `env`로 주입하지 않으며, 응답·클라이언트 props·에러 메시지·로그에 포함하지 않는다. 브라우저에는 Supabase URL과 Publishable key만 전달한다. Publishable key는 브라우저에서 공개되는 값이며, 데이터 접근은 Auth·RLS로 제한한다. Secret key는 RLS를 우회하므로 서버의 소유권·공유 세션 검사를 생략할 수 없다. [Supabase 키 권한](https://supabase.com/docs/guides/getting-started/api-keys).
+
+**개발 단계 검사:** 로컬 커밋 훅은 스테이징된 환경 파일과 예제의 채워진 키를 거부하고, Gitleaks로 추가되는 비밀 패턴을 검사한다. 검사기가 없거나 실행에 실패하면 커밋을 중단한다. 별도 CI는 Git 이력을 Gitleaks로 검사하며 비밀 값·원문 보고서·PR 댓글을 게시하지 않는다. 로컬 훅은 새 clone에서 설치해야 하고 우회될 수 있으며 CI는 푸시 후 검사이므로, 어느 한 검사도 유출 방지를 보장하지 않는다. 저장소 권한과 코드 리뷰를 함께 적용한다.
+
+**유출 대응:** 값이 Git·로그·채팅에 노출되면 제공자에서 해당 키를 폐기·교체하고 로컬·배포 설정을 갱신한다. 커밋에서 지우는 것만으로 복구되었다고 판단하지 않는다. 접근 기록을 확인하며 공유 이력의 재작성은 별도 영향 검토 후 진행한다.
 
 ## 7. 데이터와 명세 계약
 
@@ -476,3 +498,4 @@ Tasks.AI는 시범 기반 웹 자동화를, Saath는 부모님의 생활 요청�
 | 0.1 | 다양한 작업 버튼이라는 제품 범위 확정. 공개 조회·기기 내 사진 처리의 두 MVP 유형, 생성·검토·공유·실행 계약 및 수용 기준 작성 |
 | 0.2 | TypeScript·Next.js·Vercel·Supabase·Gemini 스택 확정, 외부 계정·환경변수 준비와 기능별 구현 task 명시 |
 | 0.3 | 공통 명세·어댑터 정책·정제 이벤트·Run 전이 검증, 한국어 웹 시작 화면과 CI 기반 구현. 사진 설정 범위 및 로컬 검증 기록 추가 |
+| 0.4 | 개발·운영 비밀 키 보관과 서버 경계 명시. 로컬 커밋·CI 유출 검사 도입 |
