@@ -8,7 +8,7 @@
 | --- | --- |
 | 버전 | 0.6 |
 | 작성일 | 2026-09-09 |
-| 상태 | TAGO 시간표·코드 조회 API와 한국어 선택 화면, Supabase MVP 저장 스키마 구현. 실제 키를 이용한 시간표 조회와 Supabase RLS 적용을 확인했으며 코드 조회·인증·AI·제품 성능과 사업 가설은 미검증 |
+| 상태 | TAGO 시간표·코드 조회 API와 한국어 선택 화면, Supabase MVP 저장 스키마 구현. 실제 키를 이용한 시간표·터미널·등급 조회와 Supabase RLS 적용을 확인했으며 인증·AI·제품 성능과 사업 가설은 미검증 |
 | 문서 역할 | Spec-Driven Development를 위한 단일 제품·기술·검증 기준 |
 | 소개 문서 | [README.md](./README.md) |
 
@@ -222,7 +222,7 @@ if (-not (Test-Path -LiteralPath apps/web/.env.local)) {
 
 코드 선택을 위해 `GetExpBusTrminlList`, `GetExpBusGradList`, `GetCtyCodeList`도 등록했다. 각각 `terminalId/terminalNm`, `gradeId/gradeNm`, `cityCode/cityName`을 `{ id, name }`으로 정규화하고, 입력 결과가 없으면 `EMPTY`로 구분한다. 터미널·버스등급은 `/bus` 화면의 검색 패널에서 사용할 수 있으며, 선택한 버스등급은 시간표 요청의 `busGradeId`로 전달한다. 도시 코드는 서버 API를 먼저 제공하고 도시 기반 선택 화면은 후속 범위로 둔다.
 
-`packages/connectors`와 `GET /api/tago/schedules`, `/api/tago/terminals`, `/api/tago/grades`, `/api/tago/cities`는 이 계약을 기준으로 구현했다. 서비스 키가 없으면 `NOT_CONFIGURED`, 정상 응답에 결과가 없으면 `EMPTY`, 공급자 인증·응답 계약 오류는 `NEEDS_ATTENTION`, 네트워크·HTTP 오류는 `FAILED`로 표시한다. 응답에는 예약·결제·잔여석을 지원하지 않는다는 출처 경계를 포함하며, 요청 URL·서비스 키를 브라우저 응답이나 오류 메시지에 노출하지 않는다. 합성 응답 테스트와 UI 상태 검증, Production 단일 조건 실제 시간표 조회까지 완료했으며, 코드 조회의 실제 배포 점검과 실제 키로 10개 조건을 조회하는 AC-09 검증은 아직 실행하지 않았다.
+`packages/connectors`와 `GET /api/tago/schedules`, `/api/tago/terminals`, `/api/tago/grades`, `/api/tago/cities`는 이 계약을 기준으로 구현했다. 서비스 키가 없으면 `NOT_CONFIGURED`, 정상 응답에 결과가 없으면 `EMPTY`, 공급자 인증·응답 계약 오류는 `NEEDS_ATTENTION`, 네트워크·HTTP 오류는 `FAILED`로 표시한다. 응답에는 예약·결제·잔여석을 지원하지 않는다는 출처 경계를 포함하며, 요청 URL·서비스 키를 브라우저 응답이나 오류 메시지에 노출하지 않는다. 합성 응답 테스트와 UI 상태 검증, Production에서 실제 터미널·등급·시간표 조회까지 완료했으며, 실제 키로 10개 조건을 조회하는 AC-09 검증은 아직 실행하지 않았다.
 
 Supabase SQL Editor에 `supabase/migrations/20260909210000_initial_schema.sql`을 적용했다. Table Editor에서 `buttons`, `workflow_versions`, `share_links`, `runs`가 생성되었고, `pg_class`·`pg_policies` 확인 쿼리로 네 테이블의 RLS 활성화와 테이블별 소유자 정책 4개를 확인했다. 이 단계에서는 인증 화면과 애플리케이션의 DB 호출 코드를 아직 연결하지 않았다.
 
@@ -439,7 +439,7 @@ AC-09는 실제 데이터 연동 단계의 기준이다. 샘플 데이터로 엔
 | --- | --- | --- | --- | --- |
 | T-01 공통 기반 | workspace, 웹 초기 화면, 이벤트·명세·상태 검증, CI | 없음 | 타입·허용 동작·참조 거부, 빌드·모바일 화면 | 로컬 검증 완료 |
 | T-02 제작자와 버전 | Supabase 인증, 소유권, 초안 저장, 불변 발행 | T-01, Supabase 연결 | AC-03·06·07의 소유자/버전 범위 | 스키마·RLS 기반 적용. 인증·호출·초안 저장 예정 |
-| T-03 공개 조회·기록 | TAGO 계약·서버 API·코드 선택·조회 화면, 데모/실제 구분, Chrome 기록 | T-01, TAGO 키 | AC-01·09·10·14·16 | 시간표·터미널·등급·도시 API와 선택 화면 구현. 기록·코드 실제 점검·실제 10건 검증 대기 |
+| T-03 공개 조회·기록 | TAGO 계약·서버 API·코드 선택·조회 화면, 데모/실제 구분, Chrome 기록 | T-01, TAGO 키 | AC-01·09·10·14·16 | 시간표·터미널·등급·도시 API와 선택 화면 구현·Production 점검. 기록·실제 10건 검증 대기 |
 | T-04 사진 도구 | 기기 내 변환·ZIP, 의미 있는 연산 기록 | T-01 | AC-11·12·14 | 브라우저 변환·ZIP 로컬 검증 완료. 의미 있는 연산 기록은 후속 |
 | T-05 AI 생성·검토 | 기록별 명세 초안, 고정/변수 편집, 수신자 미리보기 | T-02·03·04, Gemini 키 | AC-02~05 | 예정 |
 | T-06 공유 권한 | 버전별 링크, 제한 세션, 회수·만료·중지 | T-02·05 | AC-06~08 | 예정 |
@@ -455,6 +455,8 @@ T-02·03·04는 공통 계약 이후 서로 겹치지 않는 범위에서 병렬
 **T-03 검증 기록(2026-09-09):** TAGO 요청 URL·응답 정규화·빈 결과·공급자 오류와 터미널·등급·도시 코드 계약 단위 테스트, Route Handler 입력·키 미설정·성공·공급자 거부 테스트, 버스 조회 화면의 터미널 이름·버스등급 선택 E2E를 작성했다. 전체 단위 테스트 62개, 데스크톱·모바일·320px Chromium E2E 15개, 타입 검사와 프로덕션 빌드가 로컬에서 통과했다. 현재 테스트는 외부 키를 사용하지 않으며, 코드 조회의 Production 점검·실제 데이터 10개 조건과 Chrome 기록·생성·공유는 아직 검증하지 않았다.
 
 **T-03 실제 연동 점검(2026-09-09):** Production 도메인에서 `NAEK010 → NAEK300`, `20260910` 조건으로 TAGO 응답을 조회했다. `totalCount=63`과 시간표 10건을 받아 출발·도착 시각, 등급, 요금을 화면에 표시했고, 예약·결제·잔여석 동작은 제공하지 않았다. 이 한 조건의 스모크 점검은 AC-09의 10개 조건 수용 기준을 대체하지 않는다.
+
+**T-03 코드·등급 실제 점검(2026-09-09):** 최신 Production 배포에서 `서울` 터미널 검색이 실제 목록을 반환했고, 버스등급 조회가 8개 등급을 반환했다. `서울경부 → 대전복합`, `20260910`, `우등`을 선택한 뒤 시간표 27개와 현재 페이지 10건을 표시했다. 도시 코드 API는 서버 계약·합성 응답으로 검증했으며, 도시 선택 화면과 10개 조건 수용 검증은 남아 있다.
 
 **Supabase 기반 점검(2026-09-09):** SQL Editor에서 MVP 마이그레이션을 실행하고 Table Editor에서 네 테이블을 확인했다. RLS 확인 쿼리는 `buttons`, `workflow_versions`, `share_links`, `runs` 모두 `rls_enabled=true`, `policy_count=4`를 반환했다. 인증 사용자와 서버 Route Handler의 실제 CRUD·소유권 수용 기준은 T-02에서 검증한다.
 
