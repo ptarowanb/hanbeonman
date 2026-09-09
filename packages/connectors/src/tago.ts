@@ -116,6 +116,14 @@ function normalizeItems(item: TagoItem | TagoItem[] | undefined): TagoItem[] {
   return Array.isArray(item) ? item : [item];
 }
 
+function normalizeServiceKey(serviceKey: string): string {
+  try {
+    return decodeURIComponent(serviceKey);
+  } catch {
+    return serviceKey;
+  }
+}
+
 function toNumber(value: string | number): number {
   const parsed = typeof value === "number" ? value : Number(value);
   if (!Number.isSafeInteger(parsed) || parsed < 0) {
@@ -131,7 +139,7 @@ export function buildTagoScheduleUrl(
 ): URL {
   const parsedQuery = TagoScheduleQuerySchema.parse(query);
   const url = new URL(`${baseUrl.replace(/\/$/, "")}/${TAGO_OPERATION}`);
-  url.searchParams.set("serviceKey", serviceKey);
+  url.searchParams.set("serviceKey", normalizeServiceKey(serviceKey));
   url.searchParams.set("numOfRows", String(parsedQuery.numOfRows ?? 10));
   url.searchParams.set("pageNo", String(parsedQuery.pageNo ?? 1));
   url.searchParams.set("_type", "json");

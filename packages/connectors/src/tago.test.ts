@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   TagoUpstreamError,
+  buildTagoScheduleUrl,
   createTagoClient,
 } from "./tago.js";
 
@@ -11,6 +12,12 @@ const query = {
 };
 
 describe("TAGO 고속버스 커넥터", () => {
+  it("URL 인코딩된 일반 인증키를 한 번만 디코딩해 요청한다", () => {
+    const url = buildTagoScheduleUrl(query, "key%2Fwith%3Dequals");
+
+    expect(url.searchParams.get("serviceKey")).toBe("key/with=equals");
+  });
+
   it("서비스 키와 조회 조건을 안전하게 URL에 넣고 일정을 정규화한다", async () => {
     let requestedUrl = "";
     const client = createTagoClient({
