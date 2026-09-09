@@ -1,6 +1,8 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import GradePicker from "./GradePicker";
+import TerminalPicker from "./TerminalPicker";
 
 type Schedule = {
   routeId: string;
@@ -35,6 +37,7 @@ function formatFare(value: number): string {
 export default function BusSearchForm() {
   const [departure, setDeparture] = useState("NAEK010");
   const [arrival, setArrival] = useState("NAEK300");
+  const [grade, setGrade] = useState("");
   const [date, setDate] = useState("");
   const [notice, setNotice] = useState<Notice | null>(null);
   const [result, setResult] = useState<SearchResponse | null>(null);
@@ -55,6 +58,7 @@ export default function BusSearchForm() {
       arrTerminalId: arrival.trim(),
       depPlandTime: date.replaceAll("-", ""),
     });
+    if (grade) params.set("busGradeId", grade);
     setIsLoading(true);
     try {
       const response = await fetch(`/api/tago/schedules?${params.toString()}`, {
@@ -84,19 +88,14 @@ export default function BusSearchForm() {
         <h2 id="bus-form-title">어디에서 어디로<br />갈까요?</h2>
       </div>
       <form className="bus-form" onSubmit={handleSubmit}>
-        <label>
-          출발 터미널 ID
-          <input value={departure} onChange={(event) => setDeparture(event.target.value)} autoComplete="off" />
-        </label>
-        <label>
-          도착 터미널 ID
-          <input value={arrival} onChange={(event) => setArrival(event.target.value)} autoComplete="off" />
-        </label>
+        <TerminalPicker label="출발" value={departure} onChange={setDeparture} />
+        <TerminalPicker label="도착" value={arrival} onChange={setArrival} />
         <label>
           출발일
           <input type="date" value={date} onChange={(event) => setDate(event.target.value)} />
         </label>
-        <button type="submit" disabled={isLoading}>
+        <GradePicker value={grade} onChange={setGrade} />
+        <button className="bus-form-submit" type="submit" disabled={isLoading}>
           {isLoading ? "조회하는 중…" : "시간표 조회"}
         </button>
       </form>
