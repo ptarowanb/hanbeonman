@@ -3,6 +3,7 @@ import {
   TagoUpstreamError,
   buildTagoScheduleUrl,
   createTagoClient,
+  parseTagoScheduleResponse,
 } from "./tago.js";
 
 const query = {
@@ -76,6 +77,39 @@ describe("TAGO 고속버스 커넥터", () => {
       ],
     });
     expect(JSON.stringify(result)).not.toContain("decoded key");
+  });
+
+  it("TAGO가 숫자로 반환한 시간과 요금도 일정 형식으로 정규화한다", () => {
+    const result = parseTagoScheduleResponse({
+      response: {
+        header: { resultCode: "00" },
+        body: {
+          totalCount: 1,
+          items: {
+            item: {
+              routeId: "R-2",
+              gradeNm: "고속",
+              depPlandTime: 202609101030,
+              arrPlandTime: 202609101230,
+              depPlaceNm: "서울경부",
+              arrPlaceNm: "대전복합",
+              charge: 7800,
+            },
+          },
+        },
+      },
+    });
+
+    expect(result).toMatchObject({
+      status: "OK",
+      schedules: [
+        {
+          departureTime: "202609101030",
+          arrivalTime: "202609101230",
+          fare: 7800,
+        },
+      ],
+    });
   });
 
   it("정상 응답의 일정이 없으면 EMPTY를 반환한다", async () => {

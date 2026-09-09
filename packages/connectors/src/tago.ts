@@ -73,8 +73,8 @@ const responseSchema = z
                     z.object({
                       routeId: z.string(),
                       gradeNm: z.string(),
-                      depPlandTime: z.string(),
-                      arrPlandTime: z.string(),
+                      depPlandTime: z.union([z.string(), z.number()]),
+                      arrPlandTime: z.union([z.string(), z.number()]),
                       depPlaceNm: z.string(),
                       arrPlaceNm: z.string(),
                       charge: z.union([z.string(), z.number()]),
@@ -83,8 +83,8 @@ const responseSchema = z
                       z.object({
                         routeId: z.string(),
                         gradeNm: z.string(),
-                        depPlandTime: z.string(),
-                        arrPlandTime: z.string(),
+                        depPlandTime: z.union([z.string(), z.number()]),
+                        arrPlandTime: z.union([z.string(), z.number()]),
                         depPlaceNm: z.string(),
                         arrPlaceNm: z.string(),
                         charge: z.union([z.string(), z.number()]),
@@ -104,8 +104,8 @@ const responseSchema = z
 type TagoItem = {
   routeId: string;
   gradeNm: string;
-  depPlandTime: string;
-  arrPlandTime: string;
+  depPlandTime: string | number;
+  arrPlandTime: string | number;
   depPlaceNm: string;
   arrPlaceNm: string;
   charge: string | number;
@@ -175,8 +175,8 @@ export function parseTagoScheduleResponse(payload: unknown): TagoScheduleResult 
     schedules: items.map((item) => ({
       routeId: item.routeId,
       gradeName: item.gradeNm,
-      departureTime: item.depPlandTime,
-      arrivalTime: item.arrPlandTime,
+      departureTime: String(item.depPlandTime),
+      arrivalTime: String(item.arrPlandTime),
       departurePlace: item.depPlaceNm,
       arrivalPlace: item.arrPlaceNm,
       fare: toNumber(item.charge),
