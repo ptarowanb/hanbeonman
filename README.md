@@ -6,7 +6,7 @@
 
 **한번만**은 사용자가 한 번 수행한 작업을 이해하고, 다른 사람도 반복해서 사용할 수 있는 **개인용 버튼**으로 바꾸는 서비스입니다. 버튼은 다음에도 유지할 조건을 기억하고, 날짜나 파일처럼 이번에 달라지는 내용만 물어봅니다.
 
-현재는 **개발 기반 구현 단계**입니다. 한국어 웹 시작 화면, 사진 처리 도구, TAGO 고속버스 조회 어댑터와 조회 화면을 로컬에서 실행할 수 있습니다. 버스 화면에서는 터미널 이름·버스등급을 TAGO 코드로 찾아 시간표 조건에 넣을 수 있습니다. 생성·공유·인증과 코드 조회의 Production 점검은 아직 남아 있습니다.
+현재는 **개발 기반 구현 단계**입니다. 한국어 웹 시작 화면, 사진 처리 도구, TAGO 고속버스 조회 어댑터와 조회 화면을 로컬에서 실행할 수 있습니다. 버스 화면에서는 터미널 이름·버스등급을 TAGO 코드로 찾아 시간표 조건에 넣을 수 있습니다. Supabase에는 버튼·버전·공유 링크·실행 기록의 MVP 스키마와 RLS를 적용했습니다. 생성·공유·인증과 코드 조회의 Production 점검은 아직 남아 있습니다.
 
 ## 왜 만드는가
 
@@ -84,7 +84,7 @@ SDD에는 사용자 흐름, MVP 요구사항, 구조·데이터·API 계약, 공
 
 | 준비할 서비스 | 할 일 |
 | --- | --- |
-| [Supabase](https://supabase.com/dashboard) | `hanbeonman` 프로젝트(Healthy, Tokyo `ap-northeast-1`) 생성 완료. 인증·DB 스키마는 후속 연결 |
+| [Supabase](https://supabase.com/dashboard) | `hanbeonman` 프로젝트(Healthy, Tokyo `ap-northeast-1`)와 MVP 4개 테이블·RLS 적용 완료. 인증·DB 호출 연결은 후속 작업 |
 | [Vercel](https://vercel.com/signup) | `ptarowanb/hanbeonman`의 `apps/web`을 `web` 프로젝트로 연결·첫 배포 완료. Secret 값 입력 후 재배포 |
 | [Google AI Studio](https://aistudio.google.com/apikey) | Google 계정으로 로그인하고 프로젝트의 Gemini API 키 생성. 실제 사용자 기록 처리 전 유료 API 조건 확인 |
 | [공공데이터포털 TAGO 고속버스정보](https://www.data.go.kr/data/15098522/openapi.do) | 가입 후 개발계정 활용신청 |
@@ -106,6 +106,7 @@ pnpm dev
 pnpm typecheck
 pnpm test
 pnpm build
+pnpm supabase:test
 pnpm exec playwright install chromium
 pnpm test:e2e
 ```
