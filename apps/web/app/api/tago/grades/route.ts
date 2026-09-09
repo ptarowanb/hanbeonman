@@ -1,4 +1,4 @@
-import { handleTagoLookup } from "../_lookup.js";
+import { handleTagoLookup } from "../_lookup";
 
 export const runtime = "nodejs";
 
