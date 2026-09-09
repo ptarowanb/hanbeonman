@@ -1,0 +1,17 @@
+node_modules/
+.next/
+dist/
+coverage/
+playwright-report/
+test-results/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+.vercel/
+.worktrees/
+.superpowers/
+# Next.js 개발 서버가 생성하는 로컬 에이전트 안내
+/apps/web/AGENTS.md
+/apps/web/CLAUDE.md
+*.log
