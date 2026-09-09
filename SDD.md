@@ -188,8 +188,8 @@ flowchart TD
 
 | 서비스 | 사용자가 준비할 내용 | 필요한 시점 |
 | --- | --- | --- |
-| Supabase | 가입 후 `hanbeonman-dev` 프로젝트 생성, 서울(`ap-northeast-2`) 리전 선택, DB 비밀번호는 별도 보관 | 실제 인증·DB 연동 |
-| Vercel | GitHub 계정으로 가입·로그인. 배포 연결 시 `ptarowanb/hanbeonman` 저장소 선택 | 첫 배포 |
+| Supabase | `hanbeonman` 프로젝트 생성 완료, Healthy, Tokyo(`ap-northeast-1`). DB 비밀번호는 별도 보관 | 실제 인증·DB 연동 |
+| Vercel | `ptarowanb/hanbeonman`의 `apps/web`을 `web` 프로젝트로 연결하고 첫 배포 완료 | Secret 입력 후 재배포·운영 검증 |
 | Google AI Studio | Google 계정 로그인, 프로젝트의 Gemini API 키 생성, 실제 사용자 기록 처리 전 유료 API 조건 확인 | 실제 AI 명세 생성 |
 | 공공데이터포털 | 가입 후 「국토교통부_(TAGO)_고속버스정보」 개발계정 활용신청 | 실제 공개 조회 검증 |
 

@@ -80,4 +80,4 @@
 - [x] Record the verified TAGO endpoint, operations, response fields, and current environment status without any secret value.
 - [x] Record that live 10-case acceptance is pending until a rotated key is entered and verified.
 - [x] Run secret scan and documentation link checks.
-- [ ] Commit and push `docs: TAGO 연동 상태와 설정 방법 정리`.
+- [x] Commit and push `docs: TAGO 연동 상태와 설정 방법 정리`.

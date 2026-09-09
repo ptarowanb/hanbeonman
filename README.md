@@ -84,8 +84,8 @@ SDD에는 사용자 흐름, MVP 요구사항, 구조·데이터·API 계약, 공
 
 | 준비할 서비스 | 할 일 |
 | --- | --- |
-| [Supabase](https://supabase.com/dashboard) | 가입 후 `hanbeonman-dev` 프로젝트 생성, 서울 리전 선택 |
-| [Vercel](https://vercel.com/signup) | GitHub 계정으로 가입·로그인. 실제 배포 연결은 앱 준비 후 진행 |
+| [Supabase](https://supabase.com/dashboard) | `hanbeonman` 프로젝트(Healthy, Tokyo `ap-northeast-1`) 생성 완료. 인증·DB 스키마는 후속 연결 |
+| [Vercel](https://vercel.com/signup) | `ptarowanb/hanbeonman`의 `apps/web`을 `web` 프로젝트로 연결·첫 배포 완료. Secret 값 입력 후 재배포 |
 | [Google AI Studio](https://aistudio.google.com/apikey) | Google 계정으로 로그인하고 프로젝트의 Gemini API 키 생성. 실제 사용자 기록 처리 전 유료 API 조건 확인 |
 | [공공데이터포털 TAGO 고속버스정보](https://www.data.go.kr/data/15098522/openapi.do) | 가입 후 개발계정 활용신청 |
 
