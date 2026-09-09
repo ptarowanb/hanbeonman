@@ -95,6 +95,7 @@ export default function Home() {
               <div className="crop-mark" aria-hidden="true"><span>원본</span><b>작게</b></div>
               <h3>사진 줄여서<br />파일 만들기</h3>
               <p>정해 둔 크기와 형식으로 사진을 바꾸는 예시예요. 사진은 사용하는 사람의 브라우저에서 처리합니다.</p>
+              <a className="example-action" href="/photo">사진 처리 도구 열기 ↗</a>
             </article>
           </div>
         </div>

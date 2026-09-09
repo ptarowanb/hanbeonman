@@ -125,6 +125,7 @@ pnpm secrets:test
 | --- | --- |
 | `apps/web` | 한국어 시작 화면과 환경변수 예제 |
 | `packages/contracts` | 정제 이벤트·작업 명세·어댑터 정책·실행 상태 검증 |
+| `packages/photo` | 브라우저 사진 제한 검증·JPEG 변환 결과·로컬 ZIP 생성 |
 | `tests/e2e` | 데스크톱·모바일 화면 검증 |
 | `.github/workflows/ci.yml` | 설치·타입·테스트·빌드 자동 검사 |
 
@@ -142,6 +143,7 @@ pnpm secrets:test
 - [x] README 및 단일 SDD 작성
 - [x] 기술 스택과 기능별 구현 task 확정
 - [x] 개발 환경·공통 명세·한국어 웹 초기 화면 구축
+- [x] 수신자 브라우저 사진 변환·ZIP MVP 구축
 - [ ] 공개 조회 데이터의 실제 제공 범위 검증
 - [ ] 기록 → 명세 생성 → 검토 구현
 - [ ] 공개 조회와 기기 내 사진 처리 구현

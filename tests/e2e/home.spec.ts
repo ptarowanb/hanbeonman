@@ -17,3 +17,25 @@ test("시작 화면이 뷰포트에 맞고 안내 링크가 실제 흐름으로 
   await expect(page.locator("#how-it-works")).toBeInViewport();
   await expect(page).toHaveURL(/#how-it-works$/);
 });
+
+test("사진 도구가 선택한 이미지를 브라우저에서 ZIP으로 만든다", async ({ page }) => {
+  await page.goto("/photo");
+  await page.locator("#photo-files").setInputFiles({
+    name: "sample.png",
+    mimeType: "image/png",
+    buffer: Buffer.from(
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
+      "base64",
+    ),
+  });
+
+  const convertButton = page.getByRole("button", { name: "사진 변환하고 ZIP 만들기" });
+  await expect(convertButton).toBeEnabled();
+  await convertButton.click();
+  await expect(page.getByRole("status")).toContainText("1개 사진을 기기 안에서 변환했습니다.");
+
+  const downloadPromise = page.waitForEvent("download");
+  await page.getByRole("link", { name: "변환한 ZIP 다운로드" }).click();
+  const download = await downloadPromise;
+  expect(download.suggestedFilename()).toBe("hanbeonman-photos.zip");
+});
