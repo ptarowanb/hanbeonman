@@ -20,6 +20,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@hanbeonman/connectors':
+        specifier: workspace:*
+        version: link:../../packages/connectors
       '@hanbeonman/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts

@@ -1,1 +1,1 @@
-export * from "./tago.js";
+export * from "./tago";

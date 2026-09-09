@@ -9,6 +9,7 @@
     "typecheck": "next typegen && tsc --noEmit"
   },
   "dependencies": {
+    "@hanbeonman/connectors": "workspace:*",
     "@hanbeonman/contracts": "workspace:*",
     "@hanbeonman/photo": "workspace:*",
     "next": "16.3.4",
