@@ -14,4 +14,5 @@ test-results/
 # Next.js 개발 서버가 생성하는 로컬 에이전트 안내
 /apps/web/AGENTS.md
 /apps/web/CLAUDE.md
+/apps/web/next-env.d.ts
 *.log
