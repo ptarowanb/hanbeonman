@@ -52,11 +52,11 @@ expect(canTransitionRun("SUCCEEDED", "RUNNING")).toBe(false);
 ```
 
 - [ ] `pnpm test`와 `pnpm --filter @hanbeonman/contracts typecheck`를 실행한다. 거부·수락 사례가 모두 통과해야 한다.
-- [ ] 구현 범위와 테스트 결과를 검토받고 `feat: 작업 명세와 실행 상태 검증 구현`으로 커밋한다.
+- [x] 구현 범위와 테스트 결과를 검토받았다. 공통 명세 검증은 `feat: 작업 명세와 실행 상태 검증 구현`으로 독립 커밋하고 즉시 푸시한다.
 
 ## Task 2: 한국어 웹 시작 화면과 검증 자동화
 
-**파일:** `apps/web/app/{layout,page,globals.css}`, `apps/web/{next.config.ts,tsconfig.json,postcss.config.mjs,next-env.d.ts}`, `playwright.config.ts`, `tests/e2e/home.spec.ts`, `.github/workflows/ci.yml`.
+**파일:** `apps/web/app/{layout,page,globals.css}`, `apps/web/{next.config.ts,tsconfig.json,postcss.config.mjs}`, `playwright.config.ts`, `tests/e2e/home.spec.ts`, `.github/workflows/ci.yml`. `next-env.d.ts`는 Next.js가 생성하며 Git에서 제외한다.
 
 **입력:** README의 소개 문구·SDD의 두 작업 유형. 외부 환경변수 없이 초기 페이지가 열려야 한다.
 
@@ -75,13 +75,15 @@ await expect(page.locator("#how-it-works")).toBeInViewport();
 ```
 
 - [ ] CI는 체크아웃, Node 24·pnpm 설치, frozen lockfile 설치, 타입 검사, 단위 테스트, 프로덕션 빌드, Chromium 설치 및 E2E를 순서대로 실행한다. 권한은 contents: read로 둔다. 클라우드 배포와 secret은 이 CI에 필요 없다.
-- [ ] 실제 production build와 데스크톱·모바일 Chromium에서 확인하고 `feat: 한국어 웹 시작 화면과 개발 환경 구성`으로 커밋한다.
+- [ ] 실제 production build와 데스크톱·모바일 Chromium에서 확인한 뒤 `feat: 한국어 웹 시작 화면과 모바일 검증 구현`으로 독립 커밋하고 즉시 푸시한다.
 
 ## 검토와 인계
 
 - [ ] README에 실제 설치 명령과 계정 준비 순서를 반영한다.
 - [ ] SDD의 기술 결정과 후속 기능 task 상태를 갱신한다.
 - [ ] 문서 링크·비밀 값 비포함·git diff --check를 확인한다.
-- [ ] 두 task를 독립 검토한 뒤 전체 변경을 검토한다. 기존 사용자 승인에 따라 main에 합치고 한글 커밋으로 푸시한다.
+- [ ] 두 task를 독립 검토한 뒤 전체 변경을 검토한다. 기존 사용자 승인에 따라 각 기능 완료 시 main에 합치고 한글 커밋으로 각각 푸시한다. 여러 기능을 모아 한 번에 푸시하지 않는다.
+
+후속 비밀 키 관리·유출 방지 설정도 별도 기능 커밋으로 검증·푸시한다. 실제 키는 커밋에 포함하지 않는다.
 
 이 계획의 완료는 개발 기반 완료다. 실제 인증·AI 생성·공유·어댑터 실행과 AC-01~17 완료로 표시하지 않는다.
