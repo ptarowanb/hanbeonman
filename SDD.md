@@ -6,9 +6,9 @@
 
 | 항목 | 내용 |
 | --- | --- |
-| 버전 | 0.5 |
+| 버전 | 0.6 |
 | 작성일 | 2026-09-09 |
-| 상태 | TAGO 계약·서버 조회 API·한국어 화면 구현. 실제 키를 이용한 외부 조회·인증·AI·제품 성능과 사업 가설은 미검증 |
+| 상태 | TAGO 시간표·코드 조회 API와 한국어 선택 화면 구현. 실제 키를 이용한 시간표 조회는 확인했으며 코드 조회·인증·AI·제품 성능과 사업 가설은 미검증 |
 | 문서 역할 | Spec-Driven Development를 위한 단일 제품·기술·검증 기준 |
 | 소개 문서 | [README.md](./README.md) |
 
@@ -218,9 +218,11 @@ if (-not (Test-Path -LiteralPath apps/web/.env.local)) {
 
 ### 6.3.1 확인된 TAGO 계약과 구현 상태
 
-첨부된 국토교통부(TAGO) 고속버스정보 가이드와 개발계정 화면에서 다음 계약을 확인했다. 서비스 기본 주소는 `https://apis.data.go.kr/1613000/ExpBusInfo`이며, 시간표 조회는 `GetStrtpntAlocFndExpbusInfo`를 사용한다. JSON 요청에는 `serviceKey`, `depTerminalId`, `arrTerminalId`, `depPlandTime(YYYYMMDD)`가 필요하고 `pageNo`, `numOfRows`, `busGradeId`를 선택할 수 있다. 응답은 `routeId`, `gradeNm`, `depPlandTime`, `arrPlandTime`, `depPlaceNm`, `arrPlaceNm`, `charge`를 검증한 일정으로 정규화한다. 터미널·등급·도시 코드 조회는 후속 등록 대상으로 남긴다.
+첨부된 국토교통부(TAGO) 고속버스정보 가이드와 개발계정 화면에서 다음 계약을 확인했다. 서비스 기본 주소는 `https://apis.data.go.kr/1613000/ExpBusInfo`이며, 시간표 조회는 `GetStrtpntAlocFndExpbusInfo`를 사용한다. JSON 요청에는 `serviceKey`, `depTerminalId`, `arrTerminalId`, `depPlandTime(YYYYMMDD)`가 필요하고 `pageNo`, `numOfRows`, `busGradeId`를 선택할 수 있다. 응답은 `routeId`, `gradeNm`, `depPlandTime`, `arrPlandTime`, `depPlaceNm`, `arrPlaceNm`, `charge`를 검증한 일정으로 정규화한다.
 
-`packages/connectors`와 `GET /api/tago/schedules`는 이 계약을 기준으로 구현했다. 서비스 키가 없으면 `NOT_CONFIGURED`, 정상 응답에 일정이 없으면 `EMPTY`, 공급자 인증·응답 계약 오류는 `NEEDS_ATTENTION`, 네트워크·HTTP 오류는 `FAILED`로 표시한다. 응답에는 예약·결제·잔여석을 지원하지 않는다는 출처 경계를 포함하며, 요청 URL·서비스 키를 브라우저 응답이나 오류 메시지에 노출하지 않는다. 합성 응답 테스트와 UI 상태 검증, Production 단일 조건 실제 조회까지 완료했으며, 실제 키로 10개 조건을 조회하는 AC-09 검증은 아직 실행하지 않았다.
+코드 선택을 위해 `GetExpBusTrminlList`, `GetExpBusGradList`, `GetCtyCodeList`도 등록했다. 각각 `terminalId/terminalNm`, `gradeId/gradeNm`, `cityCode/cityName`을 `{ id, name }`으로 정규화하고, 입력 결과가 없으면 `EMPTY`로 구분한다. 터미널·버스등급은 `/bus` 화면의 검색 패널에서 사용할 수 있으며, 선택한 버스등급은 시간표 요청의 `busGradeId`로 전달한다. 도시 코드는 서버 API를 먼저 제공하고 도시 기반 선택 화면은 후속 범위로 둔다.
+
+`packages/connectors`와 `GET /api/tago/schedules`, `/api/tago/terminals`, `/api/tago/grades`, `/api/tago/cities`는 이 계약을 기준으로 구현했다. 서비스 키가 없으면 `NOT_CONFIGURED`, 정상 응답에 결과가 없으면 `EMPTY`, 공급자 인증·응답 계약 오류는 `NEEDS_ATTENTION`, 네트워크·HTTP 오류는 `FAILED`로 표시한다. 응답에는 예약·결제·잔여석을 지원하지 않는다는 출처 경계를 포함하며, 요청 URL·서비스 키를 브라우저 응답이나 오류 메시지에 노출하지 않는다. 합성 응답 테스트와 UI 상태 검증, Production 단일 조건 실제 시간표 조회까지 완료했으며, 코드 조회의 실제 배포 점검과 실제 키로 10개 조건을 조회하는 AC-09 검증은 아직 실행하지 않았다.
 
 **비용·AI 데이터 조건:** Gemini 무료 API는 제품 개선에 입력·출력을 사용할 수 있으므로 개발용 합성 기록에 한정한다. 실제 사용자 기록은 제품 개선에 사용하지 않는 유료 API 조건을 적용하고 9.2의 정제·최소 전송을 유지한다. AI Studio에서 키를 만든 뒤 해당 프로젝트의 할당량·결제 상태를 확인한다. Supabase 무료 플랜으로 개발을 시작할 수 있으나 심사 기간의 중단·할당량 조건을 확인해야 한다. Vercel Hobby는 개인·비상업 용도로 제한되므로 사업 운영에는 적합한 유료 플랜을 선택한다. 유료 전환·도메인 구매는 사용자가 별도로 진행한다.
 
@@ -246,7 +248,7 @@ Chrome 확장은 사용자가 요청한 지원 페이지에만 필요한 권한�
 
 Vercel의 Secret은 저장 후 값을 다시 읽을 수 없는 설정 유형이다. URL·모델명·Supabase Publishable key 같은 공개 설정은 Config를 사용해도 되지만, 실제 설정값은 이 저장소의 예제에 넣지 않는다. 운영 키를 Preview·개발 환경에 재사용하지 않으며 신뢰하지 않는 PR 코드에 키를 주입하지 않는다. [Vercel 환경변수 유형과 범위](https://vercel.com/docs/environment-variables/sensitive-environment-variables).
 
-**애플리케이션 구현 규칙:** Gemini·TAGO·Supabase Secret key를 사용하는 코드는 Next.js 서버 경계로 분리하고 서버에서만 읽는다. 현재 TAGO 키는 `GET /api/tago/schedules` Route Handler에서만 읽으며, 브라우저는 검증된 결과와 상태만 받는다. 비밀 변수에 `NEXT_PUBLIC_` 접두사를 붙이거나 `next.config`의 `env`로 주입하지 않으며, 응답·클라이언트 props·에러 메시지·로그에 포함하지 않는다. 브라우저에는 Supabase URL과 Publishable key만 전달한다. Publishable key는 브라우저에서 공개되는 값이며, 데이터 접근은 Auth·RLS로 제한한다. Secret key는 RLS를 우회하므로 서버의 소유권·공유 세션 검사를 생략할 수 없다. [Supabase 키 권한](https://supabase.com/docs/guides/getting-started/api-keys).
+**애플리케이션 구현 규칙:** Gemini·TAGO·Supabase Secret key를 사용하는 코드는 Next.js 서버 경계로 분리하고 서버에서만 읽는다. 현재 TAGO 키는 `GET /api/tago/*` Route Handler에서만 읽으며, 브라우저는 검증된 결과와 상태만 받는다. 비밀 변수에 `NEXT_PUBLIC_` 접두사를 붙이거나 `next.config`의 `env`로 주입하지 않으며, 응답·클라이언트 props·에러 메시지·로그에 포함하지 않는다. 브라우저에는 Supabase URL과 Publishable key만 전달한다. Publishable key는 브라우저에서 공개되는 값이며, 데이터 접근은 Auth·RLS로 제한한다. Secret key는 RLS를 우회하므로 서버의 소유권·공유 세션 검사를 생략할 수 없다. [Supabase 키 권한](https://supabase.com/docs/guides/getting-started/api-keys).
 
 **개발 단계 검사:** 로컬 커밋 훅은 스테이징된 환경 파일과 예제의 채워진 키를 거부하고, Gitleaks로 추가되는 비밀 패턴을 검사한다. 검사기가 없거나 실행에 실패하면 커밋을 중단한다. 별도 CI는 Git 이력을 Gitleaks로 검사하며 비밀 값·원문 보고서·PR 댓글을 게시하지 않는다. 로컬 훅은 새 clone에서 설치해야 하고 우회될 수 있으며 CI는 푸시 후 검사이므로, 어느 한 검사도 유출 방지를 보장하지 않는다. 저장소 권한과 코드 리뷰를 함께 적용한다.
 
@@ -435,7 +437,7 @@ AC-09는 실제 데이터 연동 단계의 기준이다. 샘플 데이터로 엔
 | --- | --- | --- | --- | --- |
 | T-01 공통 기반 | workspace, 웹 초기 화면, 이벤트·명세·상태 검증, CI | 없음 | 타입·허용 동작·참조 거부, 빌드·모바일 화면 | 로컬 검증 완료 |
 | T-02 제작자와 버전 | Supabase 인증, 소유권, 초안 저장, 불변 발행 | T-01, Supabase 연결 | AC-03·06·07의 소유자/버전 범위 | 예정 |
-| T-03 공개 조회·기록 | TAGO 계약·서버 API·조회 화면, 데모/실제 구분, Chrome 기록 | T-01, TAGO 키 | AC-01·09·10·14·16 | TAGO 계약·서버 API·조회 화면 구현. 기록·실제 10건 검증 대기 |
+| T-03 공개 조회·기록 | TAGO 계약·서버 API·코드 선택·조회 화면, 데모/실제 구분, Chrome 기록 | T-01, TAGO 키 | AC-01·09·10·14·16 | 시간표·터미널·등급·도시 API와 선택 화면 구현. 기록·코드 실제 점검·실제 10건 검증 대기 |
 | T-04 사진 도구 | 기기 내 변환·ZIP, 의미 있는 연산 기록 | T-01 | AC-11·12·14 | 브라우저 변환·ZIP 로컬 검증 완료. 의미 있는 연산 기록은 후속 |
 | T-05 AI 생성·검토 | 기록별 명세 초안, 고정/변수 편집, 수신자 미리보기 | T-02·03·04, Gemini 키 | AC-02~05 | 예정 |
 | T-06 공유 권한 | 버전별 링크, 제한 세션, 회수·만료·중지 | T-02·05 | AC-06~08 | 예정 |
@@ -448,7 +450,7 @@ T-02·03·04는 공통 계약 이후 서로 겹치지 않는 범위에서 병렬
 
 **T-04 검증 기록(2026-09-09):** 사진 입력·제한·순번 출력명·ZIP 헤더 단위 테스트 5개와 데스크톱·393px·320px Chromium에서 실제 1px PNG 선택→브라우저 JPEG 변환→ZIP 다운로드 E2E 3개가 로컬에서 통과했다. 원본 파일은 서버 요청 없이 브라우저 Canvas와 메모리 ZIP으로 처리한다. 이 기록은 아직 정제 이벤트 기록, 공유 링크, AI 명세 생성, Supabase 저장을 구현했다는 뜻이 아니다.
 
-**T-03 검증 기록(2026-09-09):** TAGO 요청 URL·응답 정규화·빈 결과·공급자 오류 단위 테스트 4개, Route Handler 입력·키 미설정·성공·공급자 거부 테스트 4개, 버스 조회 화면 E2E 9개(데스크톱·모바일·320px 포함), 전체 단위 테스트 52개, 타입 검사와 프로덕션 빌드가 로컬에서 통과했다. 현재 테스트는 외부 키를 사용하지 않으며, 실제 데이터 10개 조건과 Chrome 기록·생성·공유는 아직 검증하지 않았다.
+**T-03 검증 기록(2026-09-09):** TAGO 요청 URL·응답 정규화·빈 결과·공급자 오류와 터미널·등급·도시 코드 계약 단위 테스트, Route Handler 입력·키 미설정·성공·공급자 거부 테스트, 버스 조회 화면의 터미널 이름·버스등급 선택 E2E를 작성했다. 전체 단위 테스트 62개, 데스크톱·모바일·320px Chromium E2E 15개, 타입 검사와 프로덕션 빌드가 로컬에서 통과했다. 현재 테스트는 외부 키를 사용하지 않으며, 코드 조회의 Production 점검·실제 데이터 10개 조건과 Chrome 기록·생성·공유는 아직 검증하지 않았다.
 
 **T-03 실제 연동 점검(2026-09-09):** Production 도메인에서 `NAEK010 → NAEK300`, `20260910` 조건으로 TAGO 응답을 조회했다. `totalCount=63`과 시간표 10건을 받아 출발·도착 시각, 등급, 요금을 화면에 표시했고, 예약·결제·잔여석 동작은 제공하지 않았다. 이 한 조건의 스모크 점검은 AC-09의 10개 조건 수용 기준을 대체하지 않는다.
 
@@ -512,3 +514,4 @@ Tasks.AI는 시범 기반 웹 자동화를, Saath는 부모님의 생활 요청�
 | 0.3 | 공통 명세·어댑터 정책·정제 이벤트·Run 전이 검증, 한국어 웹 시작 화면과 CI 기반 구현. 사진 설정 범위 및 로컬 검증 기록 추가 |
 | 0.4 | 개발·운영 비밀 키 보관과 서버 경계 명시. 로컬 커밋·CI 유출 검사 도입 |
 | 0.5 | TAGO 계약 확인, 서버 조회 API·한국어 조회 화면과 상태 경계 구현 |
+| 0.6 | TAGO 터미널·등급·도시 코드 조회 API와 터미널·등급 선택 화면 추가 |
