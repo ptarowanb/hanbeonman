@@ -64,4 +64,23 @@ describe("POST /api/buttons/interpret", () => {
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toMatchObject({ intent: "create_button", actionKind: "weather", fixedInputs: { city: "인천" } });
   });
+
+  it("Gemini 연결 오류는 502와 안전한 메시지로 반환한다", async () => {
+    process.env.GEMINI_API_KEY = "test-key";
+    vi.stubGlobal("fetch", vi.fn(async () => {
+      throw new Error("network details must not leak");
+    }));
+
+    const response = await POST(new Request("http://localhost/api/buttons/interpret", {
+      method: "POST",
+      body: JSON.stringify({ message: "인천 날씨 버튼을 만들어줘" }),
+      headers: { "content-type": "application/json" },
+    }));
+
+    expect(response.status).toBe(502);
+    await expect(response.json()).resolves.toEqual({
+      status: "FAILED",
+      error: { code: "NETWORK_ERROR", message: "버튼 요청을 해석하지 못했습니다. 잠시 후 다시 시도해주세요." },
+    });
+  });
 });

@@ -9,6 +9,7 @@ test("시작 화면이 뷰포트에 맞고 안내 링크가 실제 흐름으로 
   await expect(page.getByRole("link", { name: "고속버스 버튼 만들기" })).toBeVisible();
   await expect(page.getByRole("link", { name: "사진 도구 열기" })).toBeVisible();
   await expect(page.getByRole("link", { name: "오늘 날씨 보기" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "말로 버튼 만들기" })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 
   if (testInfo.project.name.includes("mobile")) {

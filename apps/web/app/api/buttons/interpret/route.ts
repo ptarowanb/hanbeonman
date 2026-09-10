@@ -3,6 +3,7 @@ import { GeminiError, interpretButtonRequest } from "@hanbeonman/connectors";
 export const runtime = "nodejs";
 
 const MAX_REQUEST_CHARS = 1_000;
+const MAX_REQUEST_MS = 8_000;
 
 function invalidInput(): Response {
   return Response.json(
@@ -24,12 +25,15 @@ export async function POST(request: Request): Promise<Response> {
     : "";
   if (!message || message.length > MAX_REQUEST_CHARS) return invalidInput();
 
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), MAX_REQUEST_MS);
   try {
     const apiKey = process.env.GEMINI_API_KEY?.trim();
     const model = process.env.GEMINI_MODEL?.trim();
+    const fetchImpl = (input: RequestInfo | URL, init?: RequestInit) => fetch(input, { ...init, signal: controller.signal });
     const options = apiKey
-      ? model ? { apiKey, model } : { apiKey }
-      : {};
+      ? model ? { apiKey, model, fetchImpl } : { apiKey, fetchImpl }
+      : { fetchImpl };
     return Response.json(await interpretButtonRequest(message, options));
   } catch (error) {
     if (error instanceof GeminiError) {
@@ -49,5 +53,7 @@ export async function POST(request: Request): Promise<Response> {
       { status: "FAILED", error: { code: "INTERNAL_ERROR", message: "버튼 요청 처리 중 문제가 발생했습니다." } },
       { status: 500 },
     );
+  } finally {
+    clearTimeout(timeout);
   }
 }
