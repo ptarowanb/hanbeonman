@@ -31,6 +31,7 @@ describe("Gemini 자연어 버튼 해석 커넥터", () => {
     expect(request.init?.headers).toEqual(expect.objectContaining({ "x-goog-api-key": "test-key" }));
     expect(body.generationConfig.responseMimeType).toBe("application/json");
     expect(body.generationConfig.responseSchema).toEqual(expect.objectContaining({ type: "object" }));
+    expect(body.generationConfig.thinkingConfig).toEqual({ thinkingLevel: "minimal" });
     expect(String(request.init?.body)).toContain("인천 날씨 버튼을 만들어줘");
     expect(String(request.init?.body)).not.toContain("test-key");
   });
@@ -39,6 +40,28 @@ describe("Gemini 자연어 버튼 해석 커넥터", () => {
     expect(parseGeminiInterpretResponse({
       candidates: [{ content: { parts: [{ text: JSON.stringify(validIntent) }] } }],
     })).toEqual(validIntent);
+  });
+
+  it("Gemini 3의 생각 파트가 앞에 있어도 최종 JSON 파트를 읽는다", () => {
+    expect(parseGeminiInterpretResponse({
+      candidates: [{
+        content: {
+          parts: [
+            { text: "분류 과정을 내부적으로 검토합니다.", thought: true },
+            { text: JSON.stringify(validIntent) },
+          ],
+        },
+      }],
+    })).toEqual(validIntent);
+  });
+
+  it("버스 요청에서 요일만 있으면 실행기가 다가오는 요일을 계산하도록 지시한다", () => {
+    const request = buildGeminiInterpretRequest("금요일 서울에서 대전 출장 버튼을 만들어줘", { apiKey: "test-key" });
+    const body = JSON.parse(String(request.init?.body)) as { contents: Array<{ parts: Array<{ text: string }> }> };
+    const prompt = body.contents[0]?.parts[0]?.text ?? "";
+
+    expect(prompt).toContain("요일");
+    expect(prompt).toContain("이미 지난 요일");
   });
 
   it("후보가 없거나 계약을 벗어나면 안전한 오류를 반환한다", () => {

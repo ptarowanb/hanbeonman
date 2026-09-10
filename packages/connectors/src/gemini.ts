@@ -85,7 +85,7 @@ export const BUTTON_INTENT_RESPONSE_SCHEMA = {
 const geminiResponseSchema = z.object({
   candidates: z.array(z.object({
     content: z.object({
-      parts: z.array(z.object({ text: z.string() }).passthrough()).min(1),
+      parts: z.array(z.object({ text: z.string().optional() }).passthrough()).min(1),
     }).passthrough(),
   }).passthrough()).min(1),
 }).passthrough();
@@ -98,6 +98,7 @@ function buildPrompt(message: string): string {
     "create_button은 버튼 생성 요청, run_now는 지금 한 번 실행 요청, clarify는 등록 작업의 필수값 질문, unsupported는 미지원·위험 동작입니다.",
     "actionKind는 weather, bus_schedule, photo_compress 중 하나만 사용하세요.",
     "고정값은 다음 실행에도 유지할 값이고 requiredInputs는 실행 때 받을 값입니다.",
+    "버스 요청에 금요일처럼 요일만 있고 달력 날짜가 없으면 오늘 날짜로 고정하지 마세요. 요일을 명세에 보존하고 실행기는 오늘을 포함한 가장 가까운 해당 요일을 사용해야 하며, 이번 주에 이미 지난 요일은 다음 주로 계산합니다. 달력 날짜가 명시되면 그 날짜를 우선합니다.",
     "로그인·결제·송금·임의 URL·JavaScript·셸·DOM 조작은 unsupported로 반환하세요.",
     "모든 필드를 빠짐없이 반환하고, 사용하지 않는 문자열 필드는 null, fixedInputs는 객체, requiredInputs는 배열로 반환하세요.",
     "등록 작업 카탈로그:",
@@ -130,31 +131,36 @@ export function buildGeminiInterpretRequest(message: string, options: { apiKey: 
           temperature: 0,
           responseMimeType: "application/json",
           responseSchema: BUTTON_INTENT_RESPONSE_SCHEMA,
+          thinkingConfig: { thinkingLevel: "minimal" },
         },
       }),
     },
   };
 }
 
-function readCandidateText(payload: unknown): string {
+function readCandidateTexts(payload: unknown): string[] {
   const parsed = geminiResponseSchema.safeParse(payload);
   if (!parsed.success) throw new GeminiError("UPSTREAM_CONTRACT", "Gemini 응답 형식이 바뀌었습니다.");
-  const text = parsed.data.candidates[0]?.content.parts[0]?.text.trim();
-  if (!text) throw new GeminiError("UPSTREAM_CONTRACT", "Gemini가 버튼 명세를 반환하지 않았습니다.");
-  return text;
+  const texts = parsed.data.candidates
+    .flatMap((candidate) => candidate.content.parts.map((part) => part.text?.trim() ?? ""))
+    .filter(Boolean);
+  if (texts.length === 0) throw new GeminiError("UPSTREAM_CONTRACT", "Gemini가 버튼 명세를 반환하지 않았습니다.");
+  return texts;
 }
 
 export function parseGeminiInterpretResponse(payload: unknown): ButtonIntent {
-  const text = readCandidateText(payload).replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
-  let value: unknown;
-  try {
-    value = JSON.parse(text);
-  } catch {
-    throw new GeminiError("UPSTREAM_CONTRACT", "Gemini가 올바른 JSON 명세를 반환하지 않았습니다.");
+  for (const candidateText of readCandidateTexts(payload).reverse()) {
+    const text = candidateText.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
+    let value: unknown;
+    try {
+      value = JSON.parse(text);
+    } catch {
+      continue;
+    }
+    const parsed = parseButtonIntent(value);
+    if (parsed.success) return parsed.data;
   }
-  const parsed = parseButtonIntent(value);
-  if (!parsed.success) throw new GeminiError("UPSTREAM_CONTRACT", "Gemini 명세가 허용된 작업 계약과 맞지 않습니다.");
-  return parsed.data;
+  throw new GeminiError("UPSTREAM_CONTRACT", "Gemini가 올바른 버튼 명세를 반환하지 않았습니다.");
 }
 
 async function fetchGeminiJson(fetchImpl: GeminiFetch, request: { url: URL; init: RequestInit }): Promise<unknown> {
