@@ -116,6 +116,7 @@ export default function Home() {
           <h2 id="ready-title">반복해서 하던 일을<br />버튼 하나로 시작해요.</h2>
           <p>고속버스 조회 조건은 이름을 붙여 저장할 수 있습니다. 사진과 날씨 도구도 필요한 입력만 넣으면 바로 결과를 받을 수 있어요.</p>
           <div className="ready-actions">
+            <a className="example-action" href="/create">말로 버튼 만들기 ↗</a>
             <a className="example-action" href="/bus">버스 버튼 만들기 ↗</a>
             <a className="example-action" href="/weather">날씨 확인하기 ↗</a>
           </div>
