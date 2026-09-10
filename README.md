@@ -100,7 +100,7 @@ pnpm install --frozen-lockfile
 pnpm dev
 ```
 
-[로컬 시작 화면](http://localhost:3000)이 열립니다. 고속버스 조회 화면은 `/bus`, 사진 도구는 `/photo`, 날씨 도구는 `/weather`에서 확인할 수 있습니다. `/bus`는 진입할 때 `/api/tago/terminals?numOfRows=100`과 `/api/tago/grades?numOfRows=100`을 호출합니다. 터미널 API는 TAGO의 여러 페이지를 서버에서 합쳐 전체 목록을 반환하고, 화면은 결과를 드롭다운으로 표시합니다. 각 터미널의 검색 버튼은 이 목록을 서버에 다시 요청하지 않고 이름·ID로 즉시 필터링해 선택할 수 있게 합니다. 저장한 버스 버튼은 브라우저 localStorage에 조건만 보관하고, 실행할 때 오늘 날짜를 넣어 `/api/tago/schedules`를 호출합니다. `/weather`는 `/api/weather?city=서울`처럼 Open-Meteo 공개 API를 서버에서 조회합니다. `/api/tago/cities`는 후속 도시 선택에 사용하는 서버 조회 API입니다. `/api/supabase/health`는 서버 배포에서 `buttons` 테이블 연결만 확인하는 점검 경로입니다. TAGO 키가 없으면 조회 대신 설정 필요 상태를 표시하며, 가짜 시간표를 반환하지 않습니다.
+[로컬 시작 화면](http://localhost:3000)이 열립니다. 고속버스 조회 화면은 `/bus`, 사진 도구는 `/photo`, 날씨 도구는 `/weather`에서 확인할 수 있습니다. `/bus`는 진입할 때 `/api/tago/terminals?numOfRows=100`과 `/api/tago/grades?numOfRows=100`을 호출합니다. 터미널 API는 TAGO의 여러 페이지를 서버에서 합쳐 전체 목록을 반환하고, 화면은 결과를 드롭다운으로 표시합니다. 각 터미널의 검색 버튼은 이 목록을 서버에 다시 요청하지 않고 이름·ID로 즉시 필터링해 선택할 수 있게 합니다. 저장한 버스 버튼은 브라우저 localStorage에 조건만 보관하고, 실행할 때 오늘 날짜를 넣어 `/api/tago/schedules`를 호출합니다. `/weather`는 `/api/weather?city=서울`처럼 Open-Meteo 공개 API를 서버에서 조회하며 서울·부산·대전·제주·인천 빠른 선택은 한국어 표준 좌표를 우선 사용해 지오코더의 영문·누락 결과를 보정합니다. `/api/tago/cities`는 후속 도시 선택에 사용하는 서버 조회 API입니다. `/api/supabase/health`는 서버 배포에서 `buttons` 테이블 연결만 확인하는 점검 경로입니다. TAGO 키가 없으면 조회 대신 설정 필요 상태를 표시하며, 가짜 시간표를 반환하지 않습니다.
 
 ```sh
 pnpm typecheck

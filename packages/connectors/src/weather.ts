@@ -9,6 +9,26 @@ export type WeatherLocation = {
   longitude: number;
 };
 
+const KNOWN_CITY_LOCATIONS: Record<string, WeatherLocation> = {
+  서울: { name: "서울", latitude: 37.5665, longitude: 126.978 },
+  서울특별시: { name: "서울", latitude: 37.5665, longitude: 126.978 },
+  seoul: { name: "서울", latitude: 37.5665, longitude: 126.978 },
+  부산: { name: "부산", latitude: 35.1796, longitude: 129.0756 },
+  부산광역시: { name: "부산", latitude: 35.1796, longitude: 129.0756 },
+  pusan: { name: "부산", latitude: 35.1796, longitude: 129.0756 },
+  busan: { name: "부산", latitude: 35.1796, longitude: 129.0756 },
+  대전: { name: "대전", latitude: 36.3504, longitude: 127.3845 },
+  대전광역시: { name: "대전", latitude: 36.3504, longitude: 127.3845 },
+  daejeon: { name: "대전", latitude: 36.3504, longitude: 127.3845 },
+  제주: { name: "제주", latitude: 33.4996, longitude: 126.5312 },
+  제주도: { name: "제주", latitude: 33.4996, longitude: 126.5312 },
+  제주특별자치도: { name: "제주", latitude: 33.4996, longitude: 126.5312 },
+  jeju: { name: "제주", latitude: 33.4996, longitude: 126.5312 },
+  인천: { name: "인천", latitude: 37.4563, longitude: 126.7052 },
+  인천광역시: { name: "인천", latitude: 37.4563, longitude: 126.7052 },
+  incheon: { name: "인천", latitude: 37.4563, longitude: 126.7052 },
+};
+
 export type WeatherCurrent = {
   observedAt: string;
   temperatureC: number;
@@ -67,6 +87,11 @@ export function buildWeatherForecastUrl(location: Pick<WeatherLocation, "latitud
   return url;
 }
 
+export function getKnownWeatherLocation(city: string): WeatherLocation | null {
+  const normalized = city.trim().replace(/\s+/g, "").toLocaleLowerCase("en-US");
+  return KNOWN_CITY_LOCATIONS[normalized] ?? null;
+}
+
 export function parseWeatherLocationResponse(payload: unknown): WeatherLocation | null {
   const parsed = locationResponseSchema.safeParse(payload);
   if (!parsed.success) throw new WeatherUpstreamError("UPSTREAM_CONTRACT", "날씨 위치 응답 형식이 바뀌었습니다.");
@@ -104,7 +129,8 @@ async function fetchJson(fetchImpl: WeatherFetch, url: URL): Promise<unknown> {
 
 export async function getWeather(city: string, fetchImpl: WeatherFetch = fetch): Promise<WeatherResult> {
   const query = city.trim();
-  const location = parseWeatherLocationResponse(await fetchJson(fetchImpl, buildWeatherGeocodingUrl(query)));
+  const location = getKnownWeatherLocation(query)
+    ?? parseWeatherLocationResponse(await fetchJson(fetchImpl, buildWeatherGeocodingUrl(query)));
   if (!location) return { status: "EMPTY", query };
   const current = parseWeatherForecastResponse(await fetchJson(fetchImpl, buildWeatherForecastUrl(location)));
   return { status: "OK", location, current };

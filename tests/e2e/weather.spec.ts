@@ -24,3 +24,27 @@ test("도시 버튼을 누르면 현재 날씨를 바로 확인한다", async ({
   await expect(page.getByText("25.4°C")).toBeVisible();
   await expect(page.getByText("대체로 맑음")).toBeVisible();
 });
+
+test("인천 빠른 선택을 제공하고 부산 이름을 한글로 표시한다", async ({ page }) => {
+  await page.route("**/api/weather**", async (route) => {
+    const city = new URL(route.request().url()).searchParams.get("city") ?? "";
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        status: "OK",
+        location: { name: city, latitude: 35.1796, longitude: 129.0756 },
+        current: { observedAt: "2026-09-10T12:00", temperatureC: 27.1, precipitationMm: 0, weatherCode: 0 },
+        fetchedAt: "2026-09-10T03:00:00.000Z",
+        source: { provider: "Open-Meteo" },
+      }),
+    });
+  });
+
+  await page.goto("/weather");
+  await expect(page.getByRole("button", { name: "인천" })).toBeVisible();
+  await page.getByRole("button", { name: "부산" }).click();
+
+  await expect(page.getByRole("status")).toContainText("부산 현재 날씨");
+  await expect(page.getByText("부산 현재 날씨", { exact: true })).toBeVisible();
+});

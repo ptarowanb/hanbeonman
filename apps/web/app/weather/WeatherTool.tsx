@@ -14,7 +14,7 @@ type WeatherResponse =
   | { status: "EMPTY"; query: string }
   | { status: "INVALID_INPUT" | "FAILED"; error?: { message: string } };
 
-const QUICK_CITIES = ["서울", "부산", "대전", "제주"];
+const QUICK_CITIES = ["서울", "부산", "대전", "제주", "인천"];
 
 function weatherLabel(code: number): string {
   if (code === 0) return "맑음";
@@ -83,7 +83,7 @@ export default function WeatherTool() {
       <form className="weather-form" onSubmit={handleSubmit}>
         <label htmlFor="weather-city">도시</label>
         <div className="weather-form-row">
-          <input id="weather-city" value={city} onChange={(event) => setCity(event.target.value)} placeholder="예: 서울, 부산, 제주" autoComplete="address-level2" />
+          <input id="weather-city" value={city} onChange={(event) => setCity(event.target.value)} placeholder="예: 서울, 부산, 인천" autoComplete="address-level2" />
           <button className="weather-submit" type="submit" disabled={isLoading}>{isLoading ? "확인 중…" : "날씨 확인"}</button>
         </div>
       </form>
