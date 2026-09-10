@@ -6,9 +6,9 @@
 
 | 항목 | 내용 |
 | --- | --- |
-| 버전 | 0.6 |
-| 작성일 | 2026-09-09 |
-| 상태 | TAGO 시간표·코드 조회 API와 한국어 선택 화면, Supabase MVP 저장 스키마 구현. 실제 키를 이용한 시간표·터미널·등급 조회와 Supabase RLS 적용을 확인했으며 인증·AI·제품 성능과 사업 가설은 미검증 |
+| 버전 | 0.9 |
+| 작성일 | 2026-09-10 |
+| 상태 | TAGO 시간표·코드 조회 API와 전체 터미널·등급 드롭다운 화면, Supabase MVP 저장 스키마 구현. 실제 키를 이용한 시간표·터미널·등급 조회와 Supabase RLS 적용을 확인했으며 인증·AI·제품 성능과 사업 가설은 미검증 |
 | 문서 역할 | Spec-Driven Development를 위한 단일 제품·기술·검증 기준 |
 | 소개 문서 | [README.md](./README.md) |
 
@@ -220,7 +220,7 @@ if (-not (Test-Path -LiteralPath apps/web/.env.local)) {
 
 첨부된 국토교통부(TAGO) 고속버스정보 가이드와 개발계정 화면에서 다음 계약을 확인했다. 서비스 기본 주소는 `https://apis.data.go.kr/1613000/ExpBusInfo`이며, 시간표 조회는 `GetStrtpntAlocFndExpbusInfo`를 사용한다. JSON 요청에는 `serviceKey`, `depTerminalId`, `arrTerminalId`, `depPlandTime(YYYYMMDD)`가 필요하고 `pageNo`, `numOfRows`, `busGradeId`를 선택할 수 있다. 응답은 `routeId`, `gradeNm`, `depPlandTime`, `arrPlandTime`, `depPlaceNm`, `arrPlaceNm`, `charge`를 검증한 일정으로 정규화한다.
 
-코드 선택을 위해 `GetExpBusTrminlList`, `GetExpBusGradList`, `GetCtyCodeList`도 등록했다. 각각 `terminalId/terminalNm`, `gradeId/gradeNm`, `cityCode/cityName`을 `{ id, name }`으로 정규화하고, 입력 결과가 없으면 `EMPTY`로 구분한다. 터미널·버스등급은 `/bus` 화면의 검색 패널에서 사용할 수 있으며, 선택한 버스등급은 시간표 요청의 `busGradeId`로 전달한다. 도시 코드는 서버 API를 먼저 제공하고 도시 기반 선택 화면은 후속 범위로 둔다.
+코드 선택을 위해 `GetExpBusTrminlList`, `GetExpBusGradList`, `GetCtyCodeList`도 등록했다. 각각 `terminalId/terminalNm`, `gradeId/gradeNm`, `cityCode/cityName`을 `{ id, name }`으로 정규화하고, 입력 결과가 없으면 `EMPTY`로 구분한다. `/bus` 진입 시 터미널 목록과 버스등급을 각각 한 번 미리 조회한다. 터미널 이름 검색이나 ID 직접 입력은 사용하지 않고, 서버가 `GetExpBusTrminlList`의 전체 페이지를 합친 목록을 출발·도착 드롭다운에 제공한다. 버스등급도 진입 시 미리 채우며 선택한 등급은 시간표 요청의 `busGradeId`로 전달한다. 도시 코드는 서버 API를 먼저 제공하고 도시 기반 선택 화면은 후속 범위로 둔다.
 
 `packages/connectors`와 `GET /api/tago/schedules`, `/api/tago/terminals`, `/api/tago/grades`, `/api/tago/cities`는 이 계약을 기준으로 구현했다. 서비스 키가 없으면 `NOT_CONFIGURED`, 정상 응답에 결과가 없으면 `EMPTY`, 공급자 인증·응답 계약 오류는 `NEEDS_ATTENTION`, 네트워크·HTTP 오류는 `FAILED`로 표시한다. 응답에는 예약·결제·잔여석을 지원하지 않는다는 출처 경계를 포함하며, 요청 URL·서비스 키를 브라우저 응답이나 오류 메시지에 노출하지 않는다. 합성 응답 테스트와 UI 상태 검증, Production에서 실제 터미널·등급·시간표 조회까지 완료했으며, 실제 키로 10개 조건을 조회하는 AC-09 검증은 아직 실행하지 않았다.
 
@@ -458,6 +458,8 @@ T-02·03·04는 공통 계약 이후 서로 겹치지 않는 범위에서 병렬
 
 **T-03 코드·등급 실제 점검(2026-09-09):** 최신 Production 배포에서 `서울` 터미널 검색이 실제 목록을 반환했고, 버스등급 조회가 8개 등급을 반환했다. `서울경부 → 대전복합`, `20260910`, `우등`을 선택한 뒤 시간표 27개와 현재 페이지 10건을 표시했다. 도시 코드 API는 서버 계약·합성 응답으로 검증했으며, 도시 선택 화면과 10개 조건 수용 검증은 남아 있다.
 
+**T-03 전체 코드 선택 점검(2026-09-10):** 터미널 목록 API가 `totalCount=453`인 응답을 100개 단위 페이지로 끝까지 합쳐 `NAEK300`을 포함한 전체 항목을 반환하는지 로컬 실제 키로 확인했다. `/bus`는 터미널 2개와 등급 목록을 진입 직후 드롭다운으로 표시하고, 선택한 ID·등급을 시간표 요청에 전달한다. 전체 단위 테스트 66개, 데스크톱·모바일·320px Chromium E2E 15개, 타입 검사와 프로덕션 빌드가 통과했다. Production 새 배포의 시각·실제 시간표 회귀 확인은 남아 있다.
+
 **Supabase 기반 점검(2026-09-09):** SQL Editor에서 MVP 마이그레이션을 실행하고 Table Editor에서 네 테이블을 확인했다. RLS 확인 쿼리는 `buttons`, `workflow_versions`, `share_links`, `runs` 모두 `rls_enabled=true`, `policy_count=4`를 반환했다. 인증 사용자와 서버 Route Handler의 실제 CRUD·소유권 수용 기준은 T-02에서 검증한다.
 
 해커톤 데모와 실제 가족 파일럿의 완료 기준을 구분한다. 데모 데이터로 생성·공유·실행 구조를 시연할 수 있지만, 파일럿 전에는 최소 한 개의 실제 공개 조회와 기기 내 사진 처리가 모두 동작해야 한다. 프레임워크 실행 성공만으로 제품이 완성되었다고 판단하지 않는다.
@@ -523,3 +525,4 @@ Tasks.AI는 시범 기반 웹 자동화를, Saath는 부모님의 생활 요청�
 | 0.6 | TAGO 터미널·등급·도시 코드 조회 API와 터미널·등급 선택 화면 추가 |
 | 0.7 | Supabase MVP 저장 스키마·RLS 적용과 실제 프로젝트 점검 기록 |
 | 0.8 | Supabase 서버 연결 헬스 API와 배포 검증 경계 추가 |
+| 0.9 | 전체 터미널 페이지 합산과 터미널·등급 진입 시 드롭다운 선택 UI 추가 |
