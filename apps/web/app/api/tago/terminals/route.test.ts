@@ -60,6 +60,44 @@ describe("GET /api/tago/terminals", () => {
     expect(JSON.stringify(body)).not.toContain("test-key");
   });
 
+  it("검색어 없이 조회하면 모든 터미널 페이지를 합친다", async () => {
+    process.env.TAGO_SERVICE_KEY = "test-key";
+    const requestedPages: string[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = new URL(String(input));
+        const pageNo = url.searchParams.get("pageNo") ?? "1";
+        requestedPages.push(pageNo);
+        const item = pageNo === "1"
+          ? [{ terminalId: "NAEK010", terminalNm: "서울경부" }, { terminalId: "NAEK300", terminalNm: "대전복합" }]
+          : [{ terminalId: "NAEK200", terminalNm: "강릉" }];
+        return new Response(
+          JSON.stringify({
+            response: {
+              header: { resultCode: "00" },
+              body: { totalCount: 3, items: { item } },
+            },
+          }),
+          { status: 200 },
+        );
+      }),
+    );
+
+    const response = await GET(
+      new Request("http://localhost/api/tago/terminals?numOfRows=2"),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(requestedPages).toEqual(["1", "2"]);
+    expect(body.items).toEqual([
+      { id: "NAEK010", name: "서울경부" },
+      { id: "NAEK300", name: "대전복합" },
+      { id: "NAEK200", name: "강릉" },
+    ]);
+  });
+
   it("잘못된 페이지 조건은 400으로 거절한다", async () => {
     process.env.TAGO_SERVICE_KEY = "test-key";
     const fetchSpy = vi.fn();

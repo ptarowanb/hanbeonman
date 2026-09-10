@@ -1,8 +1,8 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import GradePicker from "./GradePicker";
-import TerminalPicker from "./TerminalPicker";
+import TerminalPicker, { type LookupItem } from "./TerminalPicker";
 
 type Schedule = {
   routeId: string;
@@ -25,6 +25,44 @@ type SearchResponse = {
 
 type Notice = { kind: "error" | "success"; message: string };
 
+type LookupResponse = {
+  status: "OK" | "EMPTY" | "NEEDS_ATTENTION" | "FAILED";
+  items?: LookupItem[];
+  error?: { message: string };
+};
+
+type LookupState = {
+  items: LookupItem[];
+  isLoading: boolean;
+  error: string;
+};
+
+const initialLookupState: LookupState = {
+  items: [],
+  isLoading: true,
+  error: "",
+};
+
+async function fetchLookup(
+  path: string,
+  emptyMessage: string,
+  failureMessage: string,
+): Promise<LookupState> {
+  try {
+    const response = await fetch(path, { headers: { accept: "application/json" } });
+    const payload = (await response.json()) as LookupResponse;
+    if (!response.ok || payload.status === "NEEDS_ATTENTION" || payload.status === "FAILED") {
+      return { items: [], isLoading: false, error: payload.error?.message ?? failureMessage };
+    }
+    if (payload.status === "EMPTY" || !payload.items?.length) {
+      return { items: [], isLoading: false, error: emptyMessage };
+    }
+    return { items: payload.items, isLoading: false, error: "" };
+  } catch {
+    return { items: [], isLoading: false, error: failureMessage };
+  }
+}
+
 function formatTime(value: string): string {
   if (!/^\d{12}$/.test(value)) return value;
   return `${value.slice(8, 10)}:${value.slice(10, 12)}`;
@@ -38,10 +76,37 @@ export default function BusSearchForm() {
   const [departure, setDeparture] = useState("NAEK010");
   const [arrival, setArrival] = useState("NAEK300");
   const [grade, setGrade] = useState("");
+  const [terminals, setTerminals] = useState<LookupState>(initialLookupState);
+  const [grades, setGrades] = useState<LookupState>(initialLookupState);
   const [date, setDate] = useState("");
   const [notice, setNotice] = useState<Notice | null>(null);
   const [result, setResult] = useState<SearchResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    let isCurrent = true;
+
+    Promise.all([
+      fetchLookup(
+        "/api/tago/terminals?numOfRows=100",
+        "터미널 목록이 없습니다.",
+        "터미널 목록을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.",
+      ),
+      fetchLookup(
+        "/api/tago/grades?numOfRows=100",
+        "사용할 수 있는 버스 등급이 없습니다.",
+        "버스 등급을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.",
+      ),
+    ]).then(([terminalState, gradeState]) => {
+      if (!isCurrent) return;
+      setTerminals(terminalState);
+      setGrades(gradeState);
+    });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, []);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -88,19 +153,39 @@ export default function BusSearchForm() {
         <h2 id="bus-form-title">어디에서 어디로<br />갈까요?</h2>
       </div>
       <form className="bus-form" onSubmit={handleSubmit}>
-        <TerminalPicker label="출발" value={departure} onChange={setDeparture} />
-        <TerminalPicker label="도착" value={arrival} onChange={setArrival} />
-        <label>
+        <TerminalPicker
+          label="출발"
+          value={departure}
+          onChange={setDeparture}
+          items={terminals.items}
+          isLoading={terminals.isLoading}
+          error={terminals.error}
+        />
+        <TerminalPicker
+          label="도착"
+          value={arrival}
+          onChange={setArrival}
+          items={terminals.items}
+          isLoading={terminals.isLoading}
+          error={terminals.error}
+        />
+        <label className="bus-form-field" htmlFor="bus-date">
           출발일
-          <input type="date" value={date} onChange={(event) => setDate(event.target.value)} />
+          <input id="bus-date" type="date" value={date} onChange={(event) => setDate(event.target.value)} />
         </label>
-        <GradePicker value={grade} onChange={setGrade} />
+        <GradePicker
+          value={grade}
+          onChange={setGrade}
+          items={grades.items}
+          isLoading={grades.isLoading}
+          error={grades.error}
+        />
         <button className="bus-form-submit" type="submit" disabled={isLoading}>
           {isLoading ? "조회하는 중…" : "시간표 조회"}
         </button>
       </form>
 
-      <p className="bus-tool-help">터미널 ID는 TAGO 기준 코드예요. 예시: 서울경부 `NAEK010`, 대전복합 `NAEK300`</p>
+      <p className="bus-tool-help">터미널 ID를 직접 입력하지 않고 TAGO 공개 목록에서 선택합니다.</p>
       <p className="bus-tool-boundary">예약·결제·잔여석은 제공하지 않습니다.</p>
 
       {notice && <p className={`bus-notice ${notice.kind}`} role="status">{notice.message}</p>}

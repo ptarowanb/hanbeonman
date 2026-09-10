@@ -6,6 +6,7 @@ import {
 } from "@hanbeonman/connectors";
 
 const MAX_REQUEST_MS = 30_000;
+const MAX_TERMINAL_PAGES = 20;
 
 export type TagoLookupResource = "terminals" | "grades" | "cities";
 
@@ -69,9 +70,41 @@ async function lookup(
   resource: TagoLookupResource,
   query: TagoLookupQuery,
 ): Promise<TagoLookupResult> {
-  if (resource === "terminals") return client.getTerminals(query);
+  if (resource === "terminals") return lookupAllTerminals(client, query);
   if (resource === "grades") return client.getGrades(query);
   return client.getCities(query);
+}
+
+async function lookupAllTerminals(
+  client: ReturnType<typeof createTagoClient>,
+  query: TagoLookupQuery,
+): Promise<TagoLookupResult> {
+  // 이름 검색은 이미 필터된 결과이므로 기존 단일 페이지 계약을 유지한다.
+  if (query.terminalNm || query.pageNo !== undefined) return client.getTerminals(query);
+
+  const pageSize = query.numOfRows ?? 100;
+  const firstPage = await client.getTerminals({ ...query, pageNo: 1, numOfRows: pageSize });
+  if (firstPage.status === "EMPTY") return firstPage;
+
+  const items = [...firstPage.items];
+  const seenIds = new Set(items.map((item) => item.id));
+  const pageCount = Math.min(
+    Math.ceil(firstPage.totalCount / pageSize),
+    MAX_TERMINAL_PAGES,
+  );
+
+  for (let pageNo = 2; pageNo <= pageCount && items.length < firstPage.totalCount; pageNo += 1) {
+    const nextPage = await client.getTerminals({ ...query, pageNo, numOfRows: pageSize });
+    if (nextPage.status === "EMPTY") break;
+    for (const item of nextPage.items) {
+      if (seenIds.has(item.id)) continue;
+      seenIds.add(item.id);
+      items.push(item);
+    }
+  }
+
+  if (items.length === 0) return { status: "EMPTY", totalCount: 0, items: [] };
+  return { status: "OK", totalCount: firstPage.totalCount, items };
 }
 
 export async function handleTagoLookup(
