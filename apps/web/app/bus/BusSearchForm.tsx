@@ -2,7 +2,8 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import GradePicker from "./GradePicker";
-import TerminalPicker, { type LookupItem } from "./TerminalPicker";
+import TerminalPicker from "./TerminalPicker";
+import type { LookupItem } from "./lookup";
 
 type Schedule = {
   routeId: string;

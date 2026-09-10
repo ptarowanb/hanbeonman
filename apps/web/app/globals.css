@@ -122,6 +122,17 @@ footer p { margin: 0; color: #61707a; font-size: .76rem; }
 .bus-form select { cursor: pointer; }
 .bus-form select:disabled { cursor: wait; color: #61707a; opacity: .75; }
 .bus-terminal-field, .bus-grade-field { min-width: 0; }
+.bus-terminal-control { position: relative; }
+.bus-terminal-control select { padding-right: 62px; }
+.bus-terminal-search-button { position: absolute; top: 50%; right: 7px; transform: translateY(-50%); min-height: 34px; padding: 3px 9px; border: 1px solid var(--ink); border-radius: 999px; background: var(--yellow); color: var(--ink); font: inherit; font-size: .7rem; font-weight: 800; cursor: pointer; }
+.bus-terminal-search-button:disabled { cursor: wait; opacity: .6; }
+.bus-terminal-search-panel { position: absolute; z-index: 3; top: calc(100% + 6px); left: 0; right: 0; padding: 15px; border: 2px solid var(--ink); border-radius: 12px; background: var(--cream); box-shadow: 5px 6px 0 rgba(23, 45, 61, .15); }
+.bus-terminal-search-panel label { font-size: .78rem; }
+.bus-terminal-search-panel input { margin-top: 7px; min-height: 42px; }
+.bus-terminal-search-options { display: grid; gap: 5px; max-height: 210px; overflow-y: auto; margin: 10px 0 0; padding: 0; list-style: none; }
+.bus-terminal-search-options button { width: 100%; padding: 9px 10px; border: 1px solid rgba(23, 45, 61, .3); border-radius: 7px; background: white; color: var(--ink); text-align: left; font: inherit; font-size: .78rem; cursor: pointer; }
+.bus-terminal-search-options button:hover, .bus-terminal-search-options button:focus-visible { border-color: var(--ink); background: #fff5c9; }
+.bus-terminal-search-empty { margin: 10px 0 0; color: #9d2d15; font-size: .76rem; font-weight: 700; }
 .bus-field-error { margin: 7px 0 0; color: #9d2d15; font-size: .7rem; font-weight: 700; line-height: 1.35; }
 .bus-form-submit { align-self: end; min-height: 50px; padding: 8px 18px; border: 2px solid var(--ink); border-radius: 999px; background: var(--orange); color: white; font: inherit; font-weight: 800; cursor: pointer; white-space: nowrap; }
 .bus-form-submit:disabled { cursor: wait; opacity: .6; }

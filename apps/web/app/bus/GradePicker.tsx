@@ -1,6 +1,6 @@
 "use client";
 
-import type { LookupItem } from "./TerminalPicker";
+import type { LookupItem } from "./lookup";
 
 type GradePickerProps = {
   value: string;

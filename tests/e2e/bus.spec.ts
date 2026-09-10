@@ -42,7 +42,12 @@ test("터미널 목록을 미리 불러와 출발지와 도착지를 드롭다�
   await departure.selectOption("NAEK010");
   await arrival.selectOption("NAEK300");
 
-  await expect(departure).toHaveValue("NAEK010");
+  await page.getByRole("button", { name: "출발 터미널 검색" }).click();
+  await page.getByLabel("출발 터미널 이름 검색").fill("대전");
+  await expect(page.getByRole("button", { name: "대전복합 · NAEK300" })).toBeVisible();
+  await page.getByRole("button", { name: "대전복합 · NAEK300" }).click();
+
+  await expect(departure).toHaveValue("NAEK300");
   await expect(arrival).toHaveValue("NAEK300");
   await expect(page.getByText("터미널 ID를 직접 입력하지 않고 TAGO 공개 목록에서 선택합니다.")).toBeVisible();
 });
