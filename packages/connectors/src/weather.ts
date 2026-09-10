@@ -34,6 +34,7 @@ export type WeatherCurrent = {
   temperatureC: number;
   precipitationMm: number;
   weatherCode: number;
+  condition: string;
 };
 
 export type WeatherResult =
@@ -92,6 +93,21 @@ export function getKnownWeatherLocation(city: string): WeatherLocation | null {
   return KNOWN_CITY_LOCATIONS[normalized] ?? null;
 }
 
+export function getWeatherCondition(code: number): string {
+  if (code === 0) return "맑음";
+  if (code === 1) return "대체로 맑음";
+  if (code === 2) return "구름 조금";
+  if (code === 3) return "흐림";
+  if (code === 45 || code === 48) return "안개";
+  if (code >= 51 && code <= 57) return "이슬비";
+  if (code >= 61 && code <= 67) return "비";
+  if (code >= 71 && code <= 77) return "눈";
+  if (code >= 80 && code <= 82) return "소나기";
+  if (code === 85 || code === 86) return "눈 소나기";
+  if (code >= 95) return "뇌우";
+  return "날씨 정보";
+}
+
 export function parseWeatherLocationResponse(payload: unknown): WeatherLocation | null {
   const parsed = locationResponseSchema.safeParse(payload);
   if (!parsed.success) throw new WeatherUpstreamError("UPSTREAM_CONTRACT", "날씨 위치 응답 형식이 바뀌었습니다.");
@@ -109,6 +125,7 @@ export function parseWeatherForecastResponse(payload: unknown): WeatherCurrent {
     temperatureC: parsed.data.current.temperature_2m,
     precipitationMm: parsed.data.current.precipitation,
     weatherCode: parsed.data.current.weather_code,
+    condition: getWeatherCondition(parsed.data.current.weather_code),
   };
 }
 

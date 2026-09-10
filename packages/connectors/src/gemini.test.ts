@@ -56,6 +56,18 @@ describe("Gemini 자연어 버튼 해석 커넥터", () => {
     })).toEqual(validIntent);
   });
 
+  it("도시와 날씨만 입력해도 날씨 버튼 초안으로 만든다", async () => {
+    const fetchImpl = vi.fn();
+
+    await expect(interpretButtonRequest("인천 날씨", { apiKey: "", fetchImpl })).resolves.toMatchObject({
+      intent: "create_button",
+      actionKind: "weather",
+      title: "인천 날씨 조회",
+      fixedInputs: { city: "인천" },
+    });
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
+
   it("구조화 응답에 포함된 선택적 unsupportedReason null을 허용한다", () => {
     expect(parseGeminiInterpretResponse({
       candidates: [{ content: { parts: [{ text: JSON.stringify({ ...validIntent, unsupportedReason: null }) }] } }],

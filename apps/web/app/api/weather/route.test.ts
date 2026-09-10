@@ -34,7 +34,7 @@ describe("GET /api/weather", () => {
     expect(body).toMatchObject({
       status: "OK",
       location: { name: "서울" },
-      current: { temperatureC: 25.4, precipitationMm: 0, weatherCode: 1 },
+      current: { temperatureC: 25.4, precipitationMm: 0, weatherCode: 1, condition: "대체로 맑음" },
       source: { provider: "Open-Meteo" },
     });
     expect(body.fetchedAt).toEqual(expect.any(String));

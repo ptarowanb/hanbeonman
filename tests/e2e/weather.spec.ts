@@ -10,7 +10,7 @@ test("도시 버튼을 누르면 현재 날씨를 바로 확인한다", async ({
       body: JSON.stringify({
         status: "OK",
         location: { name: "서울", latitude: 37.5665, longitude: 126.978 },
-        current: { observedAt: "2026-09-10T12:00", temperatureC: 25.4, precipitationMm: 0, weatherCode: 1 },
+        current: { observedAt: "2026-09-10T12:00", temperatureC: 25.4, precipitationMm: 0, weatherCode: 1, condition: "대체로 맑음" },
         fetchedAt: "2026-09-10T03:00:00.000Z",
         source: { provider: "Open-Meteo" },
       }),
@@ -34,7 +34,7 @@ test("인천 빠른 선택을 제공하고 부산 이름을 한글로 표시한�
       body: JSON.stringify({
         status: "OK",
         location: { name: city, latitude: 35.1796, longitude: 129.0756 },
-        current: { observedAt: "2026-09-10T12:00", temperatureC: 27.1, precipitationMm: 0, weatherCode: 0 },
+        current: { observedAt: "2026-09-10T12:00", temperatureC: 27.1, precipitationMm: 0, weatherCode: 0, condition: "맑음" },
         fetchedAt: "2026-09-10T03:00:00.000Z",
         source: { provider: "Open-Meteo" },
       }),

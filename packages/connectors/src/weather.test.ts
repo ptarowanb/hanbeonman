@@ -38,7 +38,7 @@ describe("Open-Meteo 날씨 커넥터", () => {
 
     expect(parseWeatherForecastResponse({
       current: { time: "2026-09-10T12:00", temperature_2m: 25.4, precipitation: 0.2, weather_code: 2 },
-    })).toEqual({ observedAt: "2026-09-10T12:00", temperatureC: 25.4, precipitationMm: 0.2, weatherCode: 2 });
+    })).toEqual({ observedAt: "2026-09-10T12:00", temperatureC: 25.4, precipitationMm: 0.2, weatherCode: 2, condition: "구름 조금" });
   });
 
   it("도시 검색부터 현재 날씨까지 한 번에 조회한다", async () => {
@@ -58,7 +58,7 @@ describe("Open-Meteo 날씨 커넥터", () => {
     expect(result).toEqual({
       status: "OK",
       location: { name: "세종", latitude: 36.48, longitude: 127.289 },
-      current: { observedAt: "2026-09-10T12:00", temperatureC: 25.4, precipitationMm: 0, weatherCode: 1 },
+      current: { observedAt: "2026-09-10T12:00", temperatureC: 25.4, precipitationMm: 0, weatherCode: 1, condition: "대체로 맑음" },
     });
     expect(requested).toEqual(["geocoding-api.open-meteo.com", "api.open-meteo.com"]);
   });

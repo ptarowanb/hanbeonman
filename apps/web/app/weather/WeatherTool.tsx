@@ -7,6 +7,7 @@ type WeatherCurrent = {
   temperatureC: number;
   precipitationMm: number;
   weatherCode: number;
+  condition: string;
 };
 
 type WeatherResponse =
@@ -15,18 +16,6 @@ type WeatherResponse =
   | { status: "INVALID_INPUT" | "FAILED"; error?: { message: string } };
 
 const QUICK_CITIES = ["서울", "부산", "대전", "제주", "인천"];
-
-function weatherLabel(code: number): string {
-  if (code === 0) return "맑음";
-  if (code <= 3) return "대체로 맑음";
-  if (code <= 48) return "안개";
-  if (code <= 57) return "이슬비";
-  if (code <= 67 || code === 80 || code === 81) return "비";
-  if (code <= 77 || code === 85 || code === 86) return "눈";
-  if (code <= 82) return "소나기";
-  if (code >= 95) return "뇌우";
-  return "날씨 정보";
-}
 
 function formatObservedAt(value: string): string {
   const date = new Date(value);
@@ -101,7 +90,7 @@ export default function WeatherTool() {
               <p className="weather-result-location">{result.location.name} 현재 날씨</p>
               <strong>{result.current.temperatureC.toFixed(1)}°C</strong>
             </div>
-            <span className="weather-result-label">{weatherLabel(result.current.weatherCode)}</span>
+            <span className="weather-result-label">{result.current.condition}</span>
           </div>
           <dl className="weather-result-details">
             <div><dt>강수량</dt><dd>{result.current.precipitationMm.toFixed(1)}mm</dd></div>

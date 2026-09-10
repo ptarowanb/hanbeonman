@@ -13,7 +13,7 @@ const STORAGE_KEY = "hanbeonman.generated-buttons";
 const MAX_BUTTONS = 20;
 
 type InterpretError = { status: "NEEDS_ATTENTION" | "FAILED" | "INVALID_INPUT"; error?: { message?: string } };
-type WeatherRunResponse = { status: "OK"; location: { name: string }; current: { temperatureC: number; precipitationMm: number } } | InterpretError;
+type WeatherRunResponse = { status: "OK"; location: { name: string }; current: { temperatureC: number; precipitationMm: number; condition: string } } | InterpretError;
 
 function isInterpretError(value: unknown): value is InterpretError {
   return Boolean(value && typeof value === "object" && "status" in value && ["NEEDS_ATTENTION", "FAILED", "INVALID_INPUT"].includes(String(value.status)));
@@ -149,7 +149,7 @@ export default function CreateButtonTool() {
         setNotice("날씨 버튼을 실행하지 못했습니다.");
         return;
       }
-      setNotice(`${payload.location.name} 현재 ${payload.current.temperatureC.toFixed(1)}°C, 강수량 ${payload.current.precipitationMm.toFixed(1)}mm입니다.`);
+      setNotice(`${payload.location.name} 현재 ${payload.current.condition}, ${payload.current.temperatureC.toFixed(1)}°C, 강수량 ${payload.current.precipitationMm.toFixed(1)}mm입니다.`);
     } catch {
       setNotice("날씨 버튼 실행 중 문제가 발생했습니다.");
     } finally {
