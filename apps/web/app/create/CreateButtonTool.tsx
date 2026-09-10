@@ -55,9 +55,21 @@ export default function CreateButtonTool() {
         headers: { accept: "application/json", "content-type": "application/json" },
         body: JSON.stringify({ message: query }),
       });
-      const payload = (await response.json()) as ButtonIntent | InterpretError;
+      const contentType = response.headers.get("content-type") ?? "";
+      const payload = contentType.includes("application/json")
+        ? await response.json().catch(() => null) as ButtonIntent | InterpretError | null
+        : null;
       if (!response.ok) {
+        const redirectedToVercel = response.redirected && new URL(response.url).hostname === "vercel.com";
+        if (response.status === 401 || response.status === 403 || redirectedToVercel) {
+          setNotice("Vercel 배포 보호가 버튼 API 요청을 막고 있습니다. 프로젝트의 Deployment Protection 설정을 확인해주세요.");
+          return;
+        }
         setNotice(isInterpretError(payload) ? payload.error?.message ?? "버튼 요청을 해석하지 못했습니다." : "버튼 요청을 해석하지 못했습니다.");
+        return;
+      }
+      if (!payload) {
+        setNotice("버튼 API가 JSON 결과를 반환하지 않았습니다. 배포 설정을 확인해주세요.");
         return;
       }
       if (isInterpretError(payload)) {

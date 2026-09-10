@@ -68,3 +68,15 @@ test("필수 정보가 빠지면 질문에 답한 뒤 다시 해석한다", asyn
   await expect(page.getByText("부산 날씨 확인", { exact: true })).toBeVisible();
   expect(calls).toBe(2);
 });
+
+test("배포 보호로 API가 차단되면 설정 확인 안내를 보여준다", async ({ page }) => {
+  await page.route("**/api/buttons/interpret", async (route) => {
+    await route.fulfill({ status: 401, contentType: "text/html", body: "login required" });
+  });
+
+  await page.goto("/create");
+  await page.getByLabel("만들고 싶은 작업").fill("인천 날씨버튼 만들어줘");
+  await page.getByRole("button", { name: "버튼 만들기" }).click();
+
+  await expect(page.getByRole("status")).toContainText("Vercel 배포 보호");
+});

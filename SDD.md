@@ -213,6 +213,8 @@ flowchart TD
 | Google AI Studio | Google 계정 로그인, 프로젝트의 Gemini API 키 생성, 실제 사용자 기록 처리 전 유료 API 조건 확인 | 실제 AI 명세 생성 |
 | 공공데이터포털 | 가입 후 「국토교통부_(TAGO)_고속버스정보」 개발계정 활용신청 | 실제 공개 조회 검증 |
 
+Vercel Deployment Protection이 켜진 배포는 공개 화면과 별개로 `/api/buttons/interpret` 요청을 `401`로 차단할 수 있다. 자연어 버튼 생성이 이 상태를 받으면 프로젝트의 Deployment Protection에서 공개 Production 접근 또는 적절한 API 우회 범위를 사용자가 확인해야 한다.
+
 Supabase 회원가입만으로 DB가 생성되지는 않으므로 프로젝트까지 생성한다. URL과 Publishable key는 프로젝트 Connect 화면에서 확인한다. 서버의 관리용 키는 프로젝트 API Keys의 Secret key를 사용하며 클라이언트 번들에 포함하지 않는다. DB 비밀번호는 이 웹 앱의 환경변수에 넣지 않는다. 필요하면 마이그레이션 도구의 보안 입력에 별도로 사용한다.
 
 웹 앱 설정 파일은 `apps/web/.env.local`이다. 파일이 없을 때만 예제를 복사한 뒤 로컬 편집기로 입력한다. 이미 입력한 값을 덮어쓰지 않는다.

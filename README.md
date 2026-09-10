@@ -94,6 +94,8 @@ SDD에는 사용자 흐름, MVP 요구사항, 구조·데이터·API 계약, 공
 
 설정 이름·입력 위치·배포 경계는 [SDD의 계정과 환경변수 준비](./SDD.md#63-계정과-환경변수-준비)를 따릅니다. 비밀 키는 채팅이나 Git에 올리지 않고 로컬의 `apps/web/.env.local`과 배포 환경변수에만 입력합니다. 계정 준비 없이 진행할 수 있는 개발 기반부터 구현합니다.
 
+Vercel의 Deployment Protection이 활성화된 배포에서는 공개 화면이 열려도 `/api/buttons/interpret` 같은 서버 API가 `401`로 차단될 수 있습니다. `/create`에서 이 응답을 받으면 프로젝트의 Deployment Protection 설정과 API 접근 범위를 확인해야 합니다.
+
 ## 로컬 실행
 
 Node.js 24와 pnpm 11.19.0을 사용합니다. pnpm이 없다면 `npm install --global pnpm@11.19.0`으로 설치할 수 있습니다. 저장소 루트에서 실행합니다.
