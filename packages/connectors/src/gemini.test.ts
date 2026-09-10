@@ -30,7 +30,8 @@ describe("Gemini 자연어 버튼 해석 커넥터", () => {
     expect(request.url.toString()).toBe("https://generativelanguage.googleapis.com/v1beta/models/gemini-test:generateContent");
     expect(request.init?.headers).toEqual(expect.objectContaining({ "x-goog-api-key": "test-key" }));
     expect(body.generationConfig.responseMimeType).toBe("application/json");
-    expect(body.generationConfig.responseSchema).toEqual(expect.objectContaining({ type: "object" }));
+    expect(body.generationConfig.responseJsonSchema).toEqual(expect.objectContaining({ type: "object" }));
+    expect(body.generationConfig.responseSchema).toBeUndefined();
     expect(body.generationConfig.thinkingConfig).toEqual({ thinkingLevel: "minimal" });
     expect(String(request.init?.body)).toContain("인천 날씨 버튼을 만들어줘");
     expect(String(request.init?.body)).not.toContain("test-key");
@@ -53,6 +54,12 @@ describe("Gemini 자연어 버튼 해석 커넥터", () => {
         },
       }],
     })).toEqual(validIntent);
+  });
+
+  it("구조화 응답에 포함된 선택적 unsupportedReason null을 허용한다", () => {
+    expect(parseGeminiInterpretResponse({
+      candidates: [{ content: { parts: [{ text: JSON.stringify({ ...validIntent, unsupportedReason: null }) }] } }],
+    })).toMatchObject(validIntent);
   });
 
   it("버스 요청에서 요일만 있으면 실행기가 다가오는 요일을 계산하도록 지시한다", () => {

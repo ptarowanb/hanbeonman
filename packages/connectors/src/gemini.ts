@@ -130,7 +130,7 @@ export function buildGeminiInterpretRequest(message: string, options: { apiKey: 
         generationConfig: {
           temperature: 0,
           responseMimeType: "application/json",
-          responseSchema: BUTTON_INTENT_RESPONSE_SCHEMA,
+          responseJsonSchema: BUTTON_INTENT_RESPONSE_SCHEMA,
           thinkingConfig: { thinkingLevel: "minimal" },
         },
       }),
@@ -157,10 +157,19 @@ export function parseGeminiInterpretResponse(payload: unknown): ButtonIntent {
     } catch {
       continue;
     }
-    const parsed = parseButtonIntent(value);
+    const normalizedValue = normalizeIntentCandidate(value);
+    const parsed = parseButtonIntent(normalizedValue);
     if (parsed.success) return parsed.data;
   }
   throw new GeminiError("UPSTREAM_CONTRACT", "Gemini가 올바른 버튼 명세를 반환하지 않았습니다.");
+}
+
+function normalizeIntentCandidate(value: unknown): unknown {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return value;
+  const candidate = value as Record<string, unknown>;
+  if (candidate.intent === "unsupported" || candidate.unsupportedReason !== null) return value;
+  const { unsupportedReason: _unsupportedReason, ...withoutUnsupportedReason } = candidate;
+  return withoutUnsupportedReason;
 }
 
 async function fetchGeminiJson(fetchImpl: GeminiFetch, request: { url: URL; init: RequestInit }): Promise<unknown> {
