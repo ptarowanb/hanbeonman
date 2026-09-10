@@ -4,6 +4,16 @@ import { FormEvent, useEffect, useState } from "react";
 import GradePicker from "./GradePicker";
 import TerminalPicker from "./TerminalPicker";
 import type { LookupItem } from "./lookup";
+import {
+  createQuickButton,
+  getLocalDateInputValue,
+  parseQuickButtons,
+  serializeQuickButtons,
+  type BusQuickButton,
+} from "./quickButton";
+
+const QUICK_BUTTONS_STORAGE_KEY = "hanbeonman.bus.quick-buttons";
+const MAX_QUICK_BUTTONS = 6;
 
 type Schedule = {
   routeId: string;
@@ -25,6 +35,13 @@ type SearchResponse = {
 };
 
 type Notice = { kind: "error" | "success"; message: string };
+
+type SearchInput = {
+  departure: string;
+  arrival: string;
+  date: string;
+  grade: string;
+};
 
 type LookupResponse = {
   status: "OK" | "EMPTY" | "NEEDS_ATTENTION" | "FAILED";
@@ -83,6 +100,9 @@ export default function BusSearchForm() {
   const [notice, setNotice] = useState<Notice | null>(null);
   const [result, setResult] = useState<SearchResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [buttonName, setButtonName] = useState("");
+  const [quickButtons, setQuickButtons] = useState<BusQuickButton[]>([]);
+  const [isQuickButtonsReady, setIsQuickButtonsReady] = useState(false);
 
   useEffect(() => {
     let isCurrent = true;
@@ -109,22 +129,42 @@ export default function BusSearchForm() {
     };
   }, []);
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  useEffect(() => {
+    try {
+      setQuickButtons(parseQuickButtons(window.localStorage.getItem(QUICK_BUTTONS_STORAGE_KEY)));
+    } finally {
+      setIsQuickButtonsReady(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isQuickButtonsReady) return;
+    try {
+      window.localStorage.setItem(QUICK_BUTTONS_STORAGE_KEY, serializeQuickButtons(quickButtons));
+    } catch {
+      // 저장소가 차단된 브라우저에서도 조회 기능은 계속 사용할 수 있습니다.
+    }
+  }, [isQuickButtonsReady, quickButtons]);
+
+  async function runSearch(input: SearchInput) {
     setNotice(null);
     setResult(null);
 
-    if (!departure.trim() || !arrival.trim() || !date) {
+    if (!input.departure.trim() || !input.arrival.trim() || !input.date) {
       setNotice({ kind: "error", message: "출발지, 도착지, 출발일을 입력해주세요." });
+      return;
+    }
+    if (input.departure.trim() === input.arrival.trim()) {
+      setNotice({ kind: "error", message: "출발지와 도착지는 다르게 선택해주세요." });
       return;
     }
 
     const params = new URLSearchParams({
-      depTerminalId: departure.trim(),
-      arrTerminalId: arrival.trim(),
-      depPlandTime: date.replaceAll("-", ""),
+      depTerminalId: input.departure.trim(),
+      arrTerminalId: input.arrival.trim(),
+      depPlandTime: input.date.replaceAll("-", ""),
     });
-    if (grade) params.set("busGradeId", grade);
+    if (input.grade) params.set("busGradeId", input.grade);
     setIsLoading(true);
     try {
       const response = await fetch(`/api/tago/schedules?${params.toString()}`, {
@@ -147,8 +187,95 @@ export default function BusSearchForm() {
     }
   }
 
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    void runSearch({ departure, arrival, date, grade });
+  }
+
+  function handleSaveQuickButton() {
+    const name = buttonName.trim();
+    if (!name) {
+      setNotice({ kind: "error", message: "저장할 버튼 이름을 입력해주세요." });
+      return;
+    }
+    if (!departure || !arrival) {
+      setNotice({ kind: "error", message: "출발지와 도착지를 먼저 선택해주세요." });
+      return;
+    }
+    if (departure === arrival) {
+      setNotice({ kind: "error", message: "출발지와 도착지는 다르게 선택해주세요." });
+      return;
+    }
+
+    const departureItem = terminals.items.find((item) => item.id === departure) ?? { id: departure, name: departure };
+    const arrivalItem = terminals.items.find((item) => item.id === arrival) ?? { id: arrival, name: arrival };
+    const gradeItem = grade ? grades.items.find((item) => item.id === grade) ?? { id: grade, name: grade } : null;
+    const button = createQuickButton({ name, departure: departureItem, arrival: arrivalItem, grade: gradeItem });
+    setQuickButtons((current) => [button, ...current.filter((item) => item.name !== button.name)].slice(0, MAX_QUICK_BUTTONS));
+    setButtonName("");
+    setNotice({ kind: "success", message: `${button.name} 버튼을 저장했습니다.` });
+  }
+
+  function handleQuickButtonClick(button: BusQuickButton) {
+    const nextDate = getLocalDateInputValue();
+    setDeparture(button.departure.id);
+    setArrival(button.arrival.id);
+    setGrade(button.grade?.id ?? "");
+    setDate(nextDate);
+    void runSearch({
+      departure: button.departure.id,
+      arrival: button.arrival.id,
+      grade: button.grade?.id ?? "",
+      date: nextDate,
+    });
+  }
+
+  function handleDeleteQuickButton(button: BusQuickButton) {
+    setQuickButtons((current) => current.filter((item) => item.id !== button.id));
+    setNotice({ kind: "success", message: `${button.name} 버튼을 삭제했습니다.` });
+  }
+
   return (
     <section className="bus-tool" aria-labelledby="bus-form-title">
+      <section className="bus-saved-actions" aria-labelledby="saved-buttons-title">
+        <div className="bus-saved-heading">
+          <div>
+            <p className="eyebrow">내 생활 버튼</p>
+            <h2 id="saved-buttons-title">저장된 조회 버튼</h2>
+          </div>
+          {quickButtons.length > 0 && <span>{quickButtons.length}/{MAX_QUICK_BUTTONS}</span>}
+        </div>
+        {quickButtons.length > 0 ? (
+          <ul className="bus-saved-list">
+            {quickButtons.map((button) => (
+              <li key={button.id}>
+                <button
+                  className="bus-quick-button"
+                  type="button"
+                  aria-label={button.name}
+                  onClick={() => handleQuickButtonClick(button)}
+                  disabled={isLoading}
+                >
+                  <strong>{button.name}</strong>
+                  <span>{button.departure.name} → {button.arrival.name}{button.grade ? ` · ${button.grade.name}` : ""}</span>
+                  <small>오늘 바로 조회 ↗</small>
+                </button>
+                <button
+                  className="bus-quick-delete"
+                  type="button"
+                  aria-label={`${button.name} 삭제`}
+                  onClick={() => handleDeleteQuickButton(button)}
+                  disabled={isLoading}
+                >
+                  삭제
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="bus-saved-empty">자주 확인하는 노선을 아래에서 저장하면 다음부터 버튼 한 번으로 오늘 시간표를 조회할 수 있어요.</p>
+        )}
+      </section>
       <div className="bus-tool-heading">
         <p className="eyebrow">조회 조건</p>
         <h2 id="bus-form-title">어디에서 어디로<br />갈까요?</h2>
@@ -188,6 +315,31 @@ export default function BusSearchForm() {
 
       <p className="bus-tool-help">터미널 ID를 직접 입력하지 않고 TAGO 공개 목록에서 선택합니다.</p>
       <p className="bus-tool-boundary">예약·결제·잔여석은 제공하지 않습니다.</p>
+
+      <div className="bus-save-panel">
+        <div>
+          <label htmlFor="bus-button-name">이 조건을 버튼으로 저장</label>
+          <p>날짜는 저장하지 않고 버튼을 누르는 날의 시간표를 조회합니다.</p>
+        </div>
+        <div className="bus-save-row">
+          <input
+            id="bus-button-name"
+            aria-label="저장할 버튼 이름"
+            value={buttonName}
+            onChange={(event) => setButtonName(event.target.value)}
+            placeholder="예: 금요일 대전 출장"
+            maxLength={30}
+          />
+          <button
+            className="bus-save-button"
+            type="button"
+            onClick={handleSaveQuickButton}
+            disabled={terminals.isLoading || isLoading}
+          >
+            조건을 버튼으로 저장
+          </button>
+        </div>
+      </div>
 
       {notice && <p className={`bus-notice ${notice.kind}`} role="status">{notice.message}</p>}
 
