@@ -46,4 +46,30 @@ describe("자연어 버튼 해석 계약", () => {
       code: "fetch('/bank')",
     }).success).toBe(false);
   });
+
+  it("작업별로 허용되지 않은 입력 필드를 거부한다", () => {
+    expect(parseButtonIntent({
+      schemaVersion: "1.0",
+      intent: "create_button",
+      actionKind: "weather",
+      title: "날씨 버튼",
+      summary: "날씨를 조회합니다.",
+      fixedInputs: { account: "1234" },
+      requiredInputs: [],
+      clarifyingQuestion: null,
+    }).success).toBe(false);
+  });
+
+  it("날씨 버튼은 도시를 고정하거나 실행 입력으로 받아야 한다", () => {
+    expect(parseButtonIntent({
+      schemaVersion: "1.0",
+      intent: "create_button",
+      actionKind: "weather",
+      title: "날씨 버튼",
+      summary: "날씨를 조회합니다.",
+      fixedInputs: {},
+      requiredInputs: [],
+      clarifyingQuestion: null,
+    }).success).toBe(false);
+  });
 });
