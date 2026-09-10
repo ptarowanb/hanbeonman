@@ -238,7 +238,7 @@ if (-not (Test-Path -LiteralPath apps/web/.env.local)) {
 
 ### 6.3.1 확인된 TAGO 계약과 구현 상태
 
-첨부된 국토교통부(TAGO) 고속버스정보 가이드와 개발계정 화면에서 다음 계약을 확인했다. 서비스 기본 주소는 `https://apis.data.go.kr/1613000/ExpBusInfo`이며, 시간표 조회는 `GetStrtpntAlocFndExpbusInfo`를 사용한다. JSON 요청에는 `serviceKey`, `depTerminalId`, `arrTerminalId`, `depPlandTime(YYYYMMDD)`가 필요하고 `pageNo`, `numOfRows`, `busGradeId`를 선택할 수 있다. 응답은 `routeId`, `gradeNm`, `depPlandTime`, `arrPlandTime`, `depPlaceNm`, `arrPlaceNm`, `charge`를 검증한 일정으로 정규화한다.
+첨부된 국토교통부(TAGO) 고속버스정보 가이드와 개발계정 화면에서 다음 계약을 확인했다. 서비스 기본 주소는 `https://apis.data.go.kr/1613000/ExpBusInfo`이며, 시간표 조회는 `GetStrtpntAlocFndExpbusInfo`를 사용한다. JSON 요청에는 `serviceKey`, `depTerminalId`, `arrTerminalId`, `depPlandTime(YYYYMMDD)`가 필요하고 `pageNo`, `numOfRows`, `busGradeId`를 선택할 수 있다. 응답은 `routeId`, `gradeNm`, `depPlandTime`, `arrPlandTime`, `depPlaceNm`, `arrPlaceNm`, `charge`를 검증한 일정으로 정규화한다. 화면은 `numOfRows=10`을 기준으로 전체 건수에 대한 페이지를 제공하고, 사용자가 페이지를 바꿀 때 같은 조건으로 `pageNo`만 바꿔 다시 조회한다.
 
 코드 선택을 위해 `GetExpBusTrminlList`, `GetExpBusGradList`, `GetCtyCodeList`도 등록했다. 각각 `terminalId/terminalNm`, `gradeId/gradeNm`, `cityCode/cityName`을 `{ id, name }`으로 정규화하고, 입력 결과가 없으면 `EMPTY`로 구분한다. `/bus` 진입 시 터미널 목록과 버스등급을 각각 한 번 미리 조회한다. 서버가 `GetExpBusTrminlList`의 전체 페이지를 합친 목록을 출발·도착 드롭다운에 제공하며, 각 터미널의 검색 패널은 이 목록을 이름·ID로 클라이언트에서 즉시 필터링한다. ID를 직접 입력하는 필드는 제공하지 않는다. 버스등급도 진입 시 미리 채우며 선택한 등급은 시간표 요청의 `busGradeId`로 전달한다. 도시 코드는 서버 API를 먼저 제공하고 도시 기반 선택 화면은 후속 범위로 둔다.
 
@@ -246,7 +246,7 @@ if (-not (Test-Path -LiteralPath apps/web/.env.local)) {
 
 `GET /api/weather?city=서울`은 Open-Meteo 현재 예보를 조합해 기온·강수량·날씨 코드를 반환한다. 서울·부산·대전·제주·인천과 영문 별칭은 한국어 표준 좌표를 먼저 사용해 지오코더의 누락·`Pusan` 결과를 보정하고, 그 밖의 도시는 Open-Meteo 지오코딩을 사용한다. 도시를 찾지 못하면 `EMPTY`, 공급자·네트워크 오류는 `FAILED`로 구분하며 외부 제공자의 키를 사용하지 않는다.
 
-`POST /api/buttons/interpret`는 서버 전용 Gemini Structured Outputs 호출로 자연어를 버튼 초안 계약으로 변환한다. 현재 `/create`에서 생성·`clarify` 질문·초안 미리보기·localStorage 저장을 구현했으며, 저장된 날씨 버튼은 기존 날씨 API를 직접 실행한다. 버스·사진 초안은 각 도구 화면으로 연결한다. 로컬·배포 환경에 `GEMINI_API_KEY`가 없으면 503 설정 필요 상태를 반환하고, 실제 키를 사용한 품질·비용 검증과 Supabase 인증·영속 저장·공유는 후속 작업이다.
+`POST /api/buttons/interpret`는 서버 전용 Gemini Structured Outputs 호출로 자연어를 버튼 초안 계약으로 변환한다. 현재 `/create`에서 생성·`clarify` 질문·초안 미리보기·localStorage 저장을 구현했으며, 저장된 날씨 버튼은 기존 날씨 API를 직접 실행한다. 버스·사진 초안은 각 도구 화면으로 연결한다. Gemini 3 계열 응답에 생각 파트가 앞에 포함될 수 있으므로 최종 JSON 텍스트를 선택해 파싱하고, 단순 분류 요청은 `thinkingLevel: minimal`로 호출한다. 버스 요청에 달력 날짜 없이 요일만 있으면 오늘을 포함한 가장 가까운 날짜를 사용하고, 이미 지난 요일은 다음 주로 계산한다. 로컬·배포 환경에 `GEMINI_API_KEY`가 없으면 503 설정 필요 상태를 반환하고, 실제 키를 사용한 품질·비용 검증과 Supabase 인증·영속 저장·공유는 후속 작업이다.
 
 `packages/connectors`와 `GET /api/tago/schedules`, `/api/tago/terminals`, `/api/tago/grades`, `/api/tago/cities`는 이 계약을 기준으로 구현했다. 서비스 키가 없으면 `NOT_CONFIGURED`, 정상 응답에 결과가 없으면 `EMPTY`, 공급자 인증·응답 계약 오류는 `NEEDS_ATTENTION`, 네트워크·HTTP 오류는 `FAILED`로 표시한다. 응답에는 예약·결제·잔여석을 지원하지 않는다는 출처 경계를 포함하며, 요청 URL·서비스 키를 브라우저 응답이나 오류 메시지에 노출하지 않는다. 합성 응답 테스트와 UI 상태 검증, Production에서 실제 터미널·등급·시간표 조회까지 완료했으며, 실제 키로 10개 조건을 조회하는 AC-09 검증은 아직 실행하지 않았다.
 
@@ -510,11 +510,11 @@ T-02·03·04는 공통 계약 이후 서로 겹치지 않는 범위에서 병렬
 
 **T-03 전체 코드 선택·검색 점검(2026-09-10):** 터미널 목록 API가 `totalCount=453`인 응답을 100개 단위 페이지로 끝까지 합쳐 `NAEK300`을 포함한 전체 항목을 반환하는지 로컬 실제 키로 확인했다. `/bus`는 터미널 2개와 등급 목록을 진입 직후 드롭다운으로 표시하고, 검색 패널은 받은 목록의 이름·ID를 필터링해 선택한 ID를 드롭다운에 반영한다. 선택한 ID·등급은 시간표 요청에 전달한다. 전체 단위 테스트 68개, 데스크톱·모바일·320px Chromium E2E 15개, 타입 검사와 프로덕션 빌드가 통과했다. Production 새 배포의 시각·실제 시간표 회귀 확인은 남아 있다.
 
-**T-03 반복 버튼·생활 도구 점검(2026-09-10):** 버스 노선·등급을 이름으로 저장한 뒤 새로고침하고 저장 버튼을 눌러 오늘 날짜의 시간표를 한 번에 조회하는 흐름을 확인했다. `ActionDefinition` 허용 목록과 Open-Meteo 도시·현재 날씨 계약, `/weather`의 빠른 도시 버튼을 검증했다. 전체 단위 테스트 80개, 데스크톱·모바일·320px Chromium E2E 21개, 타입 검사와 프로덕션 빌드가 통과했다. 버튼 동기화·인증·공유는 아직 브라우저 로컬 범위이며 T-02·T-06에서 확장한다.
+**T-03 반복 버튼·생활 도구 점검(2026-09-10):** 버스 노선·등급을 이름으로 저장한 뒤 새로고침하고 저장 버튼을 눌러 오늘 날짜의 시간표를 한 번에 조회하는 흐름을 확인했다. `ActionDefinition` 허용 목록과 Open-Meteo 도시·현재 날씨 계약, `/weather`의 빠른 도시 버튼을 검증했다. 후속 수정에서 저장 버튼 이름의 요일을 실행 날짜로 변환하고, 시간표 63개 같은 다건 응답을 10건 단위 페이지로 이동하도록 보완했다. 버튼 동기화·인증·공유는 아직 브라우저 로컬 범위이며 T-02·T-06에서 확장한다.
 
 **T-03 주요 도시 날씨 점검(2026-09-10):** Open-Meteo 지오코더가 서울·제주를 누락하고 부산을 `Pusan`으로 반환하는 실제 응답을 확인해, 서울·부산·대전·제주·인천의 표준 좌표와 영문 별칭을 서버에서 우선 처리하도록 보정했다. `/weather`에 인천 빠른 선택을 추가하고 부산 결과·알림이 `부산`으로 표시되는 E2E를 데스크톱·모바일·320px Chromium에서 통과시켰다.
 
-**T-05 자연어 버튼 생성 점검(2026-09-10):** `ButtonIntent`의 네 의도와 작업별 입력 허용 목록을 Zod로 검증하고, 서버 Gemini 해석 커넥터와 `POST /api/buttons/interpret`의 키 미설정·계약 오류·네트워크 오류 경계를 확인했다. `/create`에서 날씨 초안 저장, 필수 도시 질문 후 재해석, 저장 버튼의 날씨 실행을 확인했으며 실행 때 Gemini를 호출하지 않는다. 전체 단위 테스트 102개, 데스크톱·모바일·320px Chromium E2E 30개, 타입 검사·프로덕션 빌드·시크릿 검사가 통과했다. 실제 Gemini 키를 사용한 모델 응답 품질·비용, Supabase 인증·영속 저장·공유는 남아 있다.
+**T-05 자연어 버튼 생성 점검(2026-09-10):** `ButtonIntent`의 네 의도와 작업별 입력 허용 목록을 Zod로 검증하고, 서버 Gemini 해석 커넥터와 `POST /api/buttons/interpret`의 키 미설정·계약 오류·네트워크 오류 경계를 확인했다. `/create`에서 날씨 초안 저장, 필수 도시 질문 후 재해석, 저장 버튼의 날씨 실행을 확인했으며 실행 때 Gemini를 호출하지 않는다. Gemini 3 생각 파트가 앞선 구조화 응답과 `thinkingLevel: minimal` 요청을 단위 테스트로 고정했다. 전체 단위 테스트 102개, 데스크톱·모바일·320px Chromium E2E 30개, 타입 검사·프로덕션 빌드·시크릿 검사가 통과했다. 실제 Gemini 키를 사용한 모델 응답 품질·비용, Supabase 인증·영속 저장·공유는 남아 있다.
 
 **Supabase 기반 점검(2026-09-09):** SQL Editor에서 MVP 마이그레이션을 실행하고 Table Editor에서 네 테이블을 확인했다. RLS 확인 쿼리는 `buttons`, `workflow_versions`, `share_links`, `runs` 모두 `rls_enabled=true`, `policy_count=4`를 반환했다. 인증 사용자와 서버 Route Handler의 실제 CRUD·소유권 수용 기준은 T-02에서 검증한다.
 

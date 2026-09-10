@@ -11,6 +11,12 @@ import {
   serializeQuickButtons,
   type BusQuickButton,
 } from "./quickButton";
+import { getNextWeekdayDate } from "./weekday";
+import {
+  getSchedulePageCount,
+  getSchedulePageNumbers,
+  SCHEDULE_PAGE_SIZE,
+} from "./schedulePagination";
 
 const QUICK_BUTTONS_STORAGE_KEY = "hanbeonman.bus.quick-buttons";
 const MAX_QUICK_BUTTONS = 6;
@@ -29,6 +35,8 @@ type SearchResponse = {
   status: "OK" | "EMPTY" | "NEEDS_ATTENTION" | "FAILED" | "INVALID_INPUT";
   totalCount?: number;
   schedules?: Schedule[];
+  pageNo?: number;
+  numOfRows?: number;
   fetchedAt?: string;
   source?: { provider: string; reservationsSupported: boolean };
   error?: { code: string; message: string };
@@ -99,6 +107,7 @@ export default function BusSearchForm() {
   const [date, setDate] = useState("");
   const [notice, setNotice] = useState<Notice | null>(null);
   const [result, setResult] = useState<SearchResponse | null>(null);
+  const [lastSearch, setLastSearch] = useState<SearchInput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [buttonName, setButtonName] = useState("");
   const [quickButtons, setQuickButtons] = useState<BusQuickButton[]>([]);
@@ -146,7 +155,7 @@ export default function BusSearchForm() {
     }
   }, [isQuickButtonsReady, quickButtons]);
 
-  async function runSearch(input: SearchInput) {
+  async function runSearch(input: SearchInput, pageNo = 1) {
     setNotice(null);
     setResult(null);
 
@@ -163,8 +172,11 @@ export default function BusSearchForm() {
       depTerminalId: input.departure.trim(),
       arrTerminalId: input.arrival.trim(),
       depPlandTime: input.date.replaceAll("-", ""),
+      pageNo: String(pageNo),
+      numOfRows: String(SCHEDULE_PAGE_SIZE),
     });
     if (input.grade) params.set("busGradeId", input.grade);
+    setLastSearch(input);
     setIsLoading(true);
     try {
       const response = await fetch(`/api/tago/schedules?${params.toString()}`, {
@@ -175,7 +187,11 @@ export default function BusSearchForm() {
         setNotice({ kind: "error", message: payload.error?.message ?? "시간표를 조회하지 못했습니다." });
         return;
       }
-      setResult(payload);
+      setResult({
+        ...payload,
+        pageNo: payload.pageNo ?? pageNo,
+        numOfRows: payload.numOfRows ?? SCHEDULE_PAGE_SIZE,
+      });
       setNotice({
         kind: "success",
         message: payload.status === "EMPTY" ? "조건에 맞는 시간표가 없습니다." : `${payload.totalCount ?? payload.schedules?.length ?? 0}개 시간표를 확인했습니다.`,
@@ -189,7 +205,7 @@ export default function BusSearchForm() {
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    void runSearch({ departure, arrival, date, grade });
+    void runSearch({ departure, arrival, date, grade }, 1);
   }
 
   function handleSaveQuickButton() {
@@ -217,7 +233,9 @@ export default function BusSearchForm() {
   }
 
   function handleQuickButtonClick(button: BusQuickButton) {
-    const nextDate = getLocalDateInputValue();
+    const nextDate = getLocalDateInputValue(
+      button.weekday === null ? new Date() : getNextWeekdayDate(new Date(), button.weekday),
+    );
     setDeparture(button.departure.id);
     setArrival(button.arrival.id);
     setGrade(button.grade?.id ?? "");
@@ -227,7 +245,12 @@ export default function BusSearchForm() {
       arrival: button.arrival.id,
       grade: button.grade?.id ?? "",
       date: nextDate,
-    });
+    }, 1);
+  }
+
+  function handlePageChange(pageNo: number) {
+    if (!lastSearch || isLoading || pageNo === result?.pageNo) return;
+    void runSearch(lastSearch, pageNo);
   }
 
   function handleDeleteQuickButton(button: BusQuickButton) {
@@ -258,7 +281,7 @@ export default function BusSearchForm() {
                 >
                   <strong>{button.name}</strong>
                   <span>{button.departure.name} → {button.arrival.name}{button.grade ? ` · ${button.grade.name}` : ""}</span>
-                  <small>오늘 바로 조회 ↗</small>
+                  <small>{button.weekday === null ? "오늘 바로 조회" : `${["일", "월", "화", "수", "목", "금", "토"][button.weekday]}요일 조회`} ↗</small>
                 </button>
                 <button
                   className="bus-quick-delete"
@@ -319,7 +342,7 @@ export default function BusSearchForm() {
       <div className="bus-save-panel">
         <div>
           <label htmlFor="bus-button-name">이 조건을 버튼으로 저장</label>
-          <p>날짜는 저장하지 않고 버튼을 누르는 날의 시간표를 조회합니다.</p>
+          <p>이름에 요일이 있으면 오늘을 포함한 가장 가까운 해당 요일, 없으면 오늘 날짜로 조회합니다.</p>
         </div>
         <div className="bus-save-row">
           <input
@@ -362,6 +385,45 @@ export default function BusSearchForm() {
               </li>
             ))}
           </ul>
+          {(() => {
+            const currentPage = result.pageNo ?? 1;
+            const pageCount = getSchedulePageCount(result.totalCount ?? result.schedules.length, result.numOfRows ?? SCHEDULE_PAGE_SIZE);
+            if (pageCount <= 1) return null;
+            return (
+              <nav className="bus-pagination" aria-label="시간표 페이지 이동">
+                <button
+                  type="button"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={isLoading || currentPage <= 1}
+                >
+                  이전
+                </button>
+                <div className="bus-pagination-pages">
+                  {getSchedulePageNumbers(pageCount, currentPage).map((page) => (
+                    <button
+                      key={page}
+                      type="button"
+                      aria-label={`${page}페이지`}
+                      aria-current={page === currentPage ? "page" : undefined}
+                      className={page === currentPage ? "is-current" : undefined}
+                      onClick={() => handlePageChange(page)}
+                      disabled={isLoading || page === currentPage}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={isLoading || currentPage >= pageCount}
+                >
+                  다음
+                </button>
+                <span>{currentPage}/{pageCount}페이지</span>
+              </nav>
+            );
+          })()}
           {result.fetchedAt && <p className="bus-fetched-at">조회 시각 {new Date(result.fetchedAt).toLocaleString("ko-KR")}</p>}
         </div>
       )}

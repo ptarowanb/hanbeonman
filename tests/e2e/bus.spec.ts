@@ -122,6 +122,48 @@ test("조회 조건을 저장해 다음부터 버튼 한 번으로 오늘 시간
   expect(requestParams?.get("depPlandTime")).toMatch(/^\d{8}$/);
 });
 
+test("전체 시간표가 여러 페이지면 페이지 버튼으로 다음 결과를 조회한다", async ({ page }) => {
+  await mockLookupLists(page);
+  const requestedPages: string[] = [];
+  await page.route("**/api/tago/schedules**", async (route) => {
+    const url = new URL(route.request().url());
+    const pageNo = url.searchParams.get("pageNo") ?? "1";
+    requestedPages.push(pageNo);
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        status: "OK",
+        totalCount: 63,
+        pageNo: Number(pageNo),
+        numOfRows: 10,
+        schedules: [{
+          routeId: `R-${pageNo}`,
+          gradeName: "우등",
+          departureTime: `2026091${pageNo}1030`,
+          arrivalTime: `2026091${pageNo}1230`,
+          departurePlace: "서울경부",
+          arrivalPlace: "대전복합",
+          fare: 12300,
+        }],
+      }),
+    });
+  });
+
+  await page.goto("/bus");
+  await page.getByRole("combobox", { name: "출발 터미널" }).selectOption("NAEK010");
+  await page.getByRole("combobox", { name: "도착 터미널" }).selectOption("NAEK300");
+  await page.getByLabel("출발일").fill("2026-09-11");
+  await page.getByRole("button", { name: "시간표 조회" }).click();
+
+  await expect(page.getByRole("button", { name: "2페이지" })).toBeVisible();
+  await expect(page.getByText("1/7페이지")).toBeVisible();
+  await page.getByRole("button", { name: "2페이지" }).click();
+
+  await expect(page.getByText("2/7페이지")).toBeVisible();
+  expect(requestedPages).toEqual(["1", "2"]);
+});
+
 test("시간표 연동 오류를 화면에 안내한다", async ({ page }) => {
   await mockLookupLists(page);
   await page.route("**/api/tago/schedules**", async (route) => {

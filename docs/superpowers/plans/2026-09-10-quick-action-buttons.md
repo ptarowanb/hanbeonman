@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** 사용자가 고속버스·사진·날씨 같은 실생활 작업을 등록된 버튼으로 실행하고, 고속버스 조건은 한 번 저장해 다음부터 버튼 한 번으로 오늘 시간표를 조회할 수 있는 실제 반복 사용 흐름을 제공한다.
+**Goal:** 사용자가 고속버스·사진·날씨 같은 실생활 작업을 등록된 버튼으로 실행하고, 고속버스 조건은 한 번 저장해 다음부터 버튼 한 번으로 목적 요일의 시간표를 조회할 수 있는 실제 반복 사용 흐름을 제공한다.
 
-**Architecture:** 실생활 작업은 허용 목록 기반 `ActionDefinition`으로 등록해 임의 URL·스크립트 실행을 막는다. 고속버스 조회 조건은 `BusQuickButton` 계약으로 정규화하고 브라우저 `localStorage`에만 저장한다. 저장한 버튼을 누르면 날짜를 실행 시점의 현지 날짜로 계산해 기존 TAGO Route Handler를 호출하며, 날씨는 키 없는 Open-Meteo 조회 어댑터로 제공하고 사진은 기존 브라우저 전용 도구로 연결한다. 홈·사진 화면은 구현 상태를 드러내는 개발 문구 대신 지금 사용할 수 있는 작업 도구와 경계를 설명한다.
+**Architecture:** 실생활 작업은 허용 목록 기반 `ActionDefinition`으로 등록해 임의 URL·스크립트 실행을 막는다. 고속버스 조회 조건은 `BusQuickButton` 계약으로 정규화하고 브라우저 `localStorage`에만 저장한다. 버튼 이름의 한국어 요일은 실행 시점 기준으로 오늘을 포함한 가장 가까운 날짜로 변환하고, 이미 지난 요일은 다음 주로 넘겨 기존 TAGO Route Handler를 호출한다. 시간표 결과는 10건 단위 API 페이지를 화면에서 이동한다. 날씨는 키 없는 Open-Meteo 조회 어댑터로 제공하고 사진은 기존 브라우저 전용 도구로 연결한다. 홈·사진 화면은 구현 상태를 드러내는 개발 문구 대신 지금 사용할 수 있는 작업 도구와 경계를 설명한다.
 
 **Tech Stack:** TypeScript, Next.js App Router, React 19, Zod, browser localStorage, Open-Meteo API, Vitest, Playwright.
 
@@ -13,7 +13,7 @@
 ## Global Constraints
 
 - 터미널·등급 목록은 TAGO 서버에서 미리 조회한 검증 목록만 사용한다.
-- 저장 버튼에는 터미널 ID·등급 ID·표시 이름만 저장하고 날짜는 저장하지 않는다.
+- 저장 버튼에는 터미널 ID·등급 ID·표시 이름·선택적 요일을 저장하고 달력 날짜는 저장하지 않는다.
 - TAGO 서비스 키와 다른 Secret은 클라이언트 번들·localStorage·로그에 넣지 않는다.
 - 외부 작업은 `ActionDefinition`에 등록된 어댑터만 실행하고 임의 URL·스크립트·로그인 자동화를 받지 않는다.
 - 예약·결제·잔여석을 제공한다고 표시하지 않는다.

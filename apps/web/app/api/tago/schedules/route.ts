@@ -110,6 +110,8 @@ export async function GET(request: Request): Promise<Response> {
     const result = await client.getSchedules(queryResult.data);
     return Response.json({
       ...result,
+      pageNo: queryResult.data.pageNo ?? 1,
+      numOfRows: queryResult.data.numOfRows ?? 10,
       fetchedAt: new Date().toISOString(),
       source: { provider: "TAGO", reservationsSupported: false },
     });

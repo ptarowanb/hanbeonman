@@ -1,13 +1,18 @@
+import { parseWeekday, type Weekday } from "./weekday";
+
+export { getLocalDateInputValue } from "./weekday";
+
 export type BusQuickButton = {
   id: string;
   name: string;
   departure: { id: string; name: string };
   arrival: { id: string; name: string };
   grade: { id: string; name: string } | null;
+  weekday: Weekday | null;
   createdAt: string;
 };
 
-type QuickButtonInput = Omit<BusQuickButton, "id" | "createdAt">;
+type QuickButtonInput = Omit<BusQuickButton, "id" | "createdAt" | "weekday">;
 
 function trimPlace(place: { id: string; name: string }): { id: string; name: string } {
   return { id: place.id.trim(), name: place.name.trim() };
@@ -29,6 +34,7 @@ export function createQuickButton(input: QuickButtonInput, now = new Date()): Bu
     departure: trimPlace(input.departure),
     arrival: trimPlace(input.arrival),
     grade: input.grade ? trimPlace(input.grade) : null,
+    weekday: parseWeekday(name),
     createdAt: now.toISOString(),
   };
 }
@@ -52,19 +58,25 @@ function isBusQuickButton(value: unknown): value is BusQuickButton {
     && isPlace(button.departure)
     && isPlace(button.arrival)
     && (button.grade === null || isPlace(button.grade))
+    && (button.weekday === undefined || isWeekday(button.weekday))
     && typeof button.createdAt === "string";
+}
+
+function isWeekday(value: unknown): value is Weekday {
+  return typeof value === "number" && Number.isInteger(value) && value >= 0 && value <= 6;
+}
+
+function normalizeQuickButton(button: BusQuickButton): BusQuickButton {
+  return { ...button, weekday: button.weekday === undefined ? null : button.weekday };
 }
 
 export function parseQuickButtons(value: string | null): BusQuickButton[] {
   try {
     const parsed: unknown = JSON.parse(value ?? "null");
-    return Array.isArray(parsed) ? parsed.filter(isBusQuickButton) : [];
+    return Array.isArray(parsed)
+      ? parsed.filter(isBusQuickButton).map((button) => normalizeQuickButton(button))
+      : [];
   } catch {
     return [];
   }
-}
-
-export function getLocalDateInputValue(date = new Date()): string {
-  const offset = date.getTimezoneOffset() * 60_000;
-  return new Date(date.getTime() - offset).toISOString().slice(0, 10);
 }

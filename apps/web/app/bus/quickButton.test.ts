@@ -16,9 +16,23 @@ describe("반복 조회 버튼 저장 계약", () => {
     }, new Date("2026-09-10T23:30:00+09:00"));
 
     expect(button.name).toBe("금요일 대전 출장");
+    expect(button.weekday).toBe(5);
     expect(button.id).toMatch(/^bus-/);
     expect(getLocalDateInputValue(new Date("2026-09-10T23:30:00+09:00"))).toBe("2026-09-10");
     expect(parseQuickButtons(serializeQuickButtons([button]))).toEqual([button]);
+  });
+
+  it("기존에 저장한 버튼은 요일 정보가 없어도 읽을 수 있다", () => {
+    const legacyButton = {
+      id: "bus-legacy",
+      name: "오늘 대전 출장",
+      departure: { id: "NAEK010", name: "서울경부" },
+      arrival: { id: "NAEK300", name: "대전복합" },
+      grade: null,
+      createdAt: "2026-09-10T00:00:00.000Z",
+    };
+
+    expect(parseQuickButtons(JSON.stringify([legacyButton]))[0]?.weekday).toBeNull();
   });
 
   it("깨진 localStorage 값은 빈 목록으로 처리한다", () => {

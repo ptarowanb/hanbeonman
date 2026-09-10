@@ -80,6 +80,47 @@ describe("GET /api/tago/schedules", () => {
     expect(JSON.stringify(body)).not.toContain("test-key");
   });
 
+  it("페이지 조건을 TAGO에 전달하고 화면용 메타데이터를 함께 반환한다", async () => {
+    process.env.TAGO_SERVICE_KEY = "test-key";
+    let requestUrl = "";
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo | URL) => {
+        requestUrl = String(input);
+        return new Response(
+          JSON.stringify({
+            response: {
+              header: { resultCode: "00" },
+              body: {
+                totalCount: 63,
+                pageNo: 2,
+                numOfRows: 10,
+                items: {
+                  item: {
+                    routeId: "R-11",
+                    gradeNm: "우등",
+                    depPlandTime: "202609111030",
+                    arrPlandTime: "202609111230",
+                    depPlaceNm: "서울경부",
+                    arrPlaceNm: "대전복합",
+                    charge: "12300",
+                  },
+                },
+              },
+            },
+          }),
+          { status: 200 },
+        );
+      }),
+    );
+
+    const response = await GET(new Request(`${validUrl}&pageNo=2&numOfRows=10`));
+    const body = await response.json();
+
+    expect(new URL(requestUrl).searchParams.get("pageNo")).toBe("2");
+    expect(body).toMatchObject({ status: "OK", totalCount: 63, pageNo: 2, numOfRows: 10 });
+  });
+
   it("공급자 거부는 NEEDS_ATTENTION으로 전달한다", async () => {
     process.env.TAGO_SERVICE_KEY = "test-key";
     vi.stubGlobal(
