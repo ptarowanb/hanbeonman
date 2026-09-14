@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import BusSearchForm from "./BusSearchForm";
 
 export default function BusPage() {
@@ -18,7 +19,9 @@ export default function BusPage() {
         <p>출발지·도착지·날짜를 입력하면 공공데이터포털의 공개 시간표를 조회합니다. 이 도구는 예약이나 결제를 처리하지 않아요.</p>
       </section>
 
-      <BusSearchForm />
+      <Suspense fallback={<p role="status">저장한 조회 조건을 불러오는 중…</p>}>
+        <BusSearchForm />
+      </Suspense>
 
       <p className="bus-back"><Link href="/">← 처음 화면으로</Link></p>
     </main>

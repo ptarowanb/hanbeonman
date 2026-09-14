@@ -1,17 +1,17 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import GradePicker from "./GradePicker";
 import TerminalPicker from "./TerminalPicker";
 import type { LookupItem } from "./lookup";
 import {
   createQuickButton,
-  getLocalDateInputValue,
   parseQuickButtons,
   serializeQuickButtons,
   type BusQuickButton,
 } from "./quickButton";
-import { getNextWeekdayDate } from "./weekday";
+import { getKoreanDateInputValue, readBusPreset, UNRESOLVED_GRADE } from "./preset";
 import {
   getSchedulePageCount,
   getSchedulePageNumbers,
@@ -99,6 +99,9 @@ function formatFare(value: number): string {
 }
 
 export default function BusSearchForm() {
+  const searchParams = useSearchParams();
+  const query = searchParams.toString();
+  const appliedQuery = useRef<string | null>(null);
   const [departure, setDeparture] = useState("NAEK010");
   const [arrival, setArrival] = useState("NAEK300");
   const [grade, setGrade] = useState("");
@@ -155,7 +158,7 @@ export default function BusSearchForm() {
     }
   }, [isQuickButtonsReady, quickButtons]);
 
-  async function runSearch(input: SearchInput, pageNo = 1) {
+  const runSearch = useCallback(async (input: SearchInput, pageNo = 1) => {
     setNotice(null);
     setResult(null);
 
@@ -165,6 +168,15 @@ export default function BusSearchForm() {
     }
     if (input.departure.trim() === input.arrival.trim()) {
       setNotice({ kind: "error", message: "출발지와 도착지는 다르게 선택해주세요." });
+      return;
+    }
+    if (!terminals.items.some((item) => item.id === input.departure)
+      || !terminals.items.some((item) => item.id === input.arrival)) {
+      setNotice({ kind: "error", message: "목록에 있는 출발 터미널과 도착 터미널을 선택해주세요." });
+      return;
+    }
+    if (input.grade && !grades.items.some((item) => item.id === input.grade)) {
+      setNotice({ kind: "error", message: "버스 등급을 다시 선택해주세요. 전체 등급으로 조회하려면 직접 선택해주세요." });
       return;
     }
 
@@ -201,7 +213,31 @@ export default function BusSearchForm() {
     } finally {
       setIsLoading(false);
     }
-  }
+  }, [terminals.items, grades.items]);
+
+  useEffect(() => {
+    if (terminals.isLoading || grades.isLoading || appliedQuery.current === query) return;
+    appliedQuery.current = query;
+    const params = new URLSearchParams(query);
+    const hasPreset = ["departure", "arrival", "grade", "weekday", "date", "auto"].some((key) => params.has(key));
+    if (!hasPreset) {
+      setDate(getKoreanDateInputValue());
+      return;
+    }
+    const preset = readBusPreset(params, terminals.items, grades.items);
+    setDeparture(preset.input.departure);
+    setArrival(preset.input.arrival);
+    setGrade(preset.input.grade);
+    setDate(preset.input.date);
+    setResult(null);
+    if (preset.issues.length > 0) {
+      setNotice({ kind: "error", message: preset.issues.join(" ") });
+    } else if (preset.canAutoRun && !terminals.error && !grades.error) {
+      void runSearch(preset.input);
+    } else {
+      setNotice({ kind: "success", message: "저장한 조건을 불러왔습니다. 조건을 확인하고 시간표를 조회하세요." });
+    }
+  }, [query, terminals, grades, runSearch]);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -233,9 +269,7 @@ export default function BusSearchForm() {
   }
 
   function handleQuickButtonClick(button: BusQuickButton) {
-    const nextDate = getLocalDateInputValue(
-      button.weekday === null ? new Date() : getNextWeekdayDate(new Date(), button.weekday),
-    );
+    const nextDate = getKoreanDateInputValue(new Date(), button.weekday ?? undefined);
     setDeparture(button.departure.id);
     setArrival(button.arrival.id);
     setGrade(button.grade?.id ?? "");
@@ -277,7 +311,7 @@ export default function BusSearchForm() {
                   type="button"
                   aria-label={button.name}
                   onClick={() => handleQuickButtonClick(button)}
-                  disabled={isLoading}
+                  disabled={isLoading || terminals.isLoading || grades.isLoading}
                 >
                   <strong>{button.name}</strong>
                   <span>{button.departure.name} → {button.arrival.name}{button.grade ? ` · ${button.grade.name}` : ""}</span>
@@ -330,8 +364,9 @@ export default function BusSearchForm() {
           items={grades.items}
           isLoading={grades.isLoading}
           error={grades.error}
+          unresolvedLabel={grade === UNRESOLVED_GRADE ? searchParams.get("grade") ?? "저장한 등급" : undefined}
         />
-        <button className="bus-form-submit" type="submit" disabled={isLoading}>
+        <button className="bus-form-submit" type="submit" disabled={isLoading || terminals.isLoading || grades.isLoading}>
           {isLoading ? "조회하는 중…" : "시간표 조회"}
         </button>
       </form>
@@ -357,7 +392,7 @@ export default function BusSearchForm() {
             className="bus-save-button"
             type="button"
             onClick={handleSaveQuickButton}
-            disabled={terminals.isLoading || isLoading}
+            disabled={terminals.isLoading || grades.isLoading || isLoading || !departure || !arrival || grade === UNRESOLVED_GRADE}
           >
             조건을 버튼으로 저장
           </button>

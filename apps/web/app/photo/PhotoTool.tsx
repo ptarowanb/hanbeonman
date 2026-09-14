@@ -1,6 +1,8 @@
 "use client";
 
 import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { readPhotoPreset, validatePhotoOptions } from "./preset";
 import {
   DEFAULT_PHOTO_OPTIONS,
   buildPhotoOutputName,
@@ -10,20 +12,6 @@ import {
 } from "@hanbeonman/photo";
 
 type Notice = { kind: "error" | "success"; message: string };
-
-function readOptions(maxEdgeValue: string, qualityValue: string):
-  | { success: true; maxEdge: number; quality: number }
-  | { success: false; message: string } {
-  const maxEdge = Number(maxEdgeValue);
-  if (!Number.isInteger(maxEdge) || maxEdge < 1 || maxEdge > 4096) {
-    return { success: false, message: "긴 변은 1~4,096px 사이의 정수로 입력하세요." };
-  }
-  const quality = Number(qualityValue);
-  if (!Number.isFinite(quality) || quality < 0.1 || quality > 1) {
-    return { success: false, message: "JPEG 품질은 0.1~1.0 사이로 입력하세요." };
-  }
-  return { success: true, maxEdge, quality };
-}
 
 async function inspectFile(file: File): Promise<PhotoFileInfo> {
   try {
@@ -73,6 +61,8 @@ async function resizeToJpeg(file: File, maxEdge: number, quality: number): Promi
 }
 
 export default function PhotoTool() {
+  const searchParams = useSearchParams();
+  const query = searchParams.toString();
   const [files, setFiles] = useState<File[]>([]);
   const [fileValidation, setFileValidation] = useState<ReturnType<typeof validatePhotoBatch> | null>(null);
   const [maxEdge, setMaxEdge] = useState(String(DEFAULT_PHOTO_OPTIONS.maxEdge));
@@ -81,6 +71,19 @@ export default function PhotoTool() {
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(query);
+    const preset = readPhotoPreset(params);
+    setMaxEdge(preset.maxEdge);
+    setQuality(preset.quality);
+    setDownloadUrl(null);
+    if (preset.issues.length > 0) {
+      setNotice({ kind: "error", message: `${preset.issues.join(" ")} 잘못된 값은 기본값으로 표시했습니다.` });
+    } else if (params.has("maxEdge") || params.has("quality")) {
+      setNotice({ kind: "success", message: "저장한 사진 조건을 불러왔습니다. 변환할 사진을 선택해주세요." });
+    }
+  }, [query]);
 
   useEffect(() => () => {
     if (downloadUrl) URL.revokeObjectURL(downloadUrl);
@@ -116,7 +119,7 @@ export default function PhotoTool() {
       setNotice({ kind: "error", message: "먼저 처리할 사진을 선택하세요." });
       return;
     }
-    const options = readOptions(maxEdge, quality);
+    const options = validatePhotoOptions(maxEdge, quality);
     if (!options.success) {
       setNotice({ kind: "error", message: options.message });
       return;
@@ -158,7 +161,7 @@ export default function PhotoTool() {
       <div className="photo-tool-options">
         <label>
           긴 변 (px)
-          <input type="number" min="1" max="4096" step="1" value={maxEdge} onChange={(event) => setMaxEdge(event.target.value)} />
+          <input type="number" min="320" max="4096" step="1" value={maxEdge} onChange={(event) => setMaxEdge(event.target.value)} />
         </label>
         <label>
           JPEG 품질
