@@ -1,0 +1,33 @@
+.card { min-width: 0; padding: clamp(18px, 3vw, 28px); border: 1px solid var(--line, #e1e6e2); border-radius: 14px; background: var(--cream, #fff); color: var(--ink, #202724); overflow-wrap: anywhere; }
+.eyebrow { margin: 0 0 14px; font-size: .82rem; font-weight: 500; color: var(--muted, #68736d); }
+.hero { display: block; margin: 16px 0; font-size: clamp(2rem, 6vw, 3.2rem); line-height: 1.2; letter-spacing: -.04em; font-weight: 500; font-variant-numeric: tabular-nums; }
+.highlight { color: var(--accent, #286353); font-size: .9rem; line-height: 1.8; margin: 16px 0 0; }
+.heading { margin: 0; font-size: clamp(1.05rem, 4vw, 1.3rem); font-weight: 500; letter-spacing: -.025em; line-height: 1.6; }
+.hint { color: var(--muted, #68736d); font-size: .8rem; line-height: 1.8; margin: 22px 0 0; }
+.details { margin: 26px 0 0; padding: 0; border-top: 1px solid var(--line, #e1e6e2); }
+.details > div { display: flex; justify-content: space-between; gap: 16px; padding: 14px 0; border-bottom: 1px solid var(--line, #e1e6e2); font-size: .86rem; line-height: 1.5; }
+.details dt { color: var(--muted, #68736d); }
+.details dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+.comparison { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 22px; }
+.product { padding: 18px; border: 1px solid var(--line, #e1e6e2); border-radius: 12px; background: var(--paper, #f7f8f7); min-width: 0; }
+.recommended { background: var(--accent-soft, #edf4ef); border-color: #becfc4; }
+.product h4 { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 0; font-size: .86rem; font-weight: 500; }
+.badge { border-radius: 5px; background: #dceae1; color: var(--accent, #286353); padding: 3px 6px; font-size: .7rem; font-weight: 500; }
+.unitPrice { font-size: clamp(1.25rem, 4vw, 1.75rem); letter-spacing: -.035em; font-variant-numeric: tabular-nums; margin: 24px 0 4px; }
+.basis { font-size: .75rem; color: var(--muted, #68736d); margin: 0; }
+.original { font-size: .8rem; line-height: 1.8; color: var(--muted, #68736d); margin: 20px 0 0; }
+.recipeTable { border-collapse: collapse; width: 100%; margin-top: 26px; table-layout: fixed; text-align: left; }
+.recipeTable caption { text-align: left; color: var(--muted, #68736d); font-size: .76rem; margin-bottom: 12px; }
+.recipeTable th, .recipeTable td { padding: 14px 8px; border-bottom: 1px solid var(--line, #e1e6e2); font-size: .86rem; line-height: 1.6; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.recipeTable th:first-child { padding-left: 0; }
+.recipeTable th:last-child, .recipeTable td:last-child { padding-right: 0; }
+.recipeTable thead th { color: var(--muted, #68736d); font-weight: 400; font-size: .8rem; }
+.recipeTable tbody th { font-weight: 400; }
+.recipeTable strong { font-weight: 500; color: var(--accent, #286353); }
+.error { background: #fff5f2; border: 1px solid #eed9d2; border-radius: 10px; color: #843d2e; padding: 14px 16px; font-size: .84rem; line-height: 1.8; overflow-wrap: anywhere; }
+@media (max-width: 420px) {
+  .comparison { grid-template-columns: minmax(0, 1fr); }
+  .product { padding: 16px; }
+  .unitPrice { margin-top: 16px; }
+  .recipeTable th, .recipeTable td { padding: 12px 5px; font-size: .78rem; }
+}
