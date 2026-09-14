@@ -9,12 +9,12 @@ export default function CreateButtonPage() {
           <span className="brand-mark" aria-hidden="true">한</span>
           <span>한번만</span>
         </Link>
-        <span className="status"><i aria-hidden="true" /> 나의 생활 버튼</span>
+        <nav className="header-nav" aria-label="주요 메뉴"><a href="#create-tool-title" aria-current="page">버튼 만들기</a><a href="#saved-buttons">내 보관함</a></nav>
       </header>
       <section className="create-intro" aria-labelledby="create-title">
-        <p className="eyebrow">오늘도, 버튼 하나로</p>
-        <h1 id="create-title">자주 하는 일을<br /><em>나만의 버튼으로.</em></h1>
-        <p>11가지 생활 작업을 내 조건으로 저장하고, 다음에는 필요한 정보만 바꿔 실행하세요.</p>
+        <p className="eyebrow">조금 더 간단한 일상</p>
+        <h1 id="create-title">한 번 만들고,<br className="mobile-break" /> <em>가볍게 누르세요.</em></h1>
+        <p>자주 하는 일에 나만의 버튼을 더하세요.</p>
       </section>
       <CreateButtonTool />
       <p className="create-back"><Link href="/">← 처음 화면으로</Link></p>
