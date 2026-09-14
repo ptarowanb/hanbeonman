@@ -1,5 +1,15 @@
 import { expect, test } from "@playwright/test";
 
+test("체크리스트 기본 항목을 수정해 저장하고 실행한다", async ({ page }) => {
+  await page.goto("/create");
+  await page.getByRole("button", { name:"준비물 체크리스트 템플릿" }).click();
+  await page.getByLabel("확인할 항목", { exact:true }).fill("여권\n충전기");
+  await page.getByRole("button", { name:"이 버튼 저장", exact:true }).click();
+  await page.getByRole("button", { name:"준비물 체크리스트 실행", exact:true }).click();
+  await page.getByRole("checkbox", { name:"여권", exact:true }).check();
+  await expect(page.getByRole("region", { name:"체크리스트 실행", exact:true })).toContainText("2개 중 1개 완료");
+});
+
 test("매번 입력하는 버튼은 다시 누르면 새 값을 받는다", async ({ page }) => {
   const draft={schemaVersion:"1.0",intent:"create_button",actionKind:"split_bill",title:"식사 나누기",summary:"식사비를 나눕니다.",fixedInputs:{people:3},requiredInputs:[{key:"amount",label:"금액(원)",type:"text",required:true}],clarifyingQuestion:null};
   await page.goto(`/create#button=${encodeURIComponent(JSON.stringify(draft))}`);
