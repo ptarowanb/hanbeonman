@@ -1,60 +1,86 @@
-# 실사용 생활 버튼 Implementation Plan
+# 실사용 생활 버튼 구현 계획
 
-> **For agentic workers:** Use task-by-task development with regression tests and independent review. 사용자 요청에 따라 승인 대기 없이 기능별 한국어 커밋·푸시한다.
+작성일: 2026-09-14 · 상태: 기능별 구현·통합 검증·접근성 회귀·푸시와 Production 주요 흐름 점검 완료.
 
-**Goal:** 버튼 생성부터 편집·저장·실행·전달까지 완성하고 생활 작업을 확장한다.
+**목표:** 버튼 생성부터 편집·저장·실행·설정 전달까지 연결하고 11개 생활 작업을 제공한다.
 
-**Architecture:** 작업별 계약과 등록 도구를 유지하며 로컬 보관함, 입력 검증, 실행 컴포넌트를 분리한다. 독립적인 날씨·도구 연결·신규 작업을 병렬 개발하고 보관함에서 통합한다.
+**구조:** 공통 작업 계약, 로컬 저장소, 초안 편집기와 작업 실행기를 분리한다. 외부 조회는 등록 서버 어댑터, 파일·계산은 브라우저 실행기를 사용한다.
 
-**Tech Stack:** TypeScript, Next.js 16.3.4, React 19, Zod, Vitest, Playwright.
+**기술:** TypeScript, Next.js/React, Zod, Vitest, Playwright.
 
-**Spec:** docs/plans/2026-09-14-everyday-product-design.md
+**설계:** [실사용 고도화 설계](../../plans/2026-09-14-everyday-product-design.md), [SDD 16절](../../../SDD.md#16-버전-20-로컬-생활-버튼-구현-기준).
 
-## Global Constraints
+## 공통 조건
 
-- 한국어 사용자 문구와 커밋 메시지. 비밀 키는 Git·로그에 기록하지 않는다.
-- 기존 localStorage 배열을 유지하고 메타데이터는 선택 필드로 읽는다.
-- 동시에 다른 작업의 파일을 편집하지 않는다. 커밋·푸시는 주 에이전트가 통합 검증 후 수행한다.
-- 최대 버튼 50개, 백업 200KB, 공유 fragment 16KB. 실패 시 기존 자료를 보존한다.
+- 한국어 사용자 문구·기능별 커밋. 비밀 키는 Git·채팅·로그에 기록하지 않는다.
+- 기존 localStorage 배열 유지, 선택 메타데이터 추가, 구버전 부분 버스 버튼의 누락 입력 마이그레이션.
+- 최대 50개 버튼, UTF-8 200,000바이트 백업·저장, 약 16KB 설정 fragment. 오류가 있으면 기존 자료를 보존한다.
+- 설정 복사 링크와 서버 관리 공유를 구분한다. 현재 복사본은 독립적이며 회수·원격 수정·만료·신원 확인 기능이 없다.
 
-## Task 1: 날씨 결과
+## Task 1: 날씨 결과 확장
 
-Files: packages/connectors/src/weather.ts 및 테스트, apps/web/app/weather/WeatherTool.tsx, 전용 WeatherResultCard.tsx와 CSS, API 테스트.
+파일: `packages/connectors/src/weather.ts`, 날씨 API 테스트, `WeatherTool.tsx`, `WeatherResultCard.tsx`와 CSS.
 
-Interface: WeatherResult OK의 current에 기존 필드 유지, 선택적 feelsLikeC/humidityPercent/windSpeedKmh, 선택적 today(date/minC/maxC/precipitationProbability) 추가. WeatherResultCard는 API OK 응답을 prop으로 받는다.
-
-- [ ] 응답의 선택 필드 누락 호환성과 실제 일일 자료를 검사하는 실패 테스트 추가.
-- [ ] 예보 파싱, 결과 카드 및 한국어 외출 안내 구현.
-- [ ] focused Vitest 및 E2E 실행 후 `feat: 날씨 예보와 외출 준비 정보 확장` 커밋·푸시.
+- [x] 추가 필드 누락을 허용하는 기존 응답 호환성과 오늘 날짜·수치 범위 검사
+- [x] 체감온도·습도·바람·오늘 최저/최고·강수확률과 외출 안내 카드
+- [x] 단위·브라우저 회귀 및 통합 검증
+- [x] `5c8ed8b` 기능 커밋·푸시
 
 ## Task 2: 버스·사진 실행 연결
 
-Files: apps/web/app/bus 및 photo 디렉터리의 입력 처리와 테스트, tests/e2e의 별도 preset-execution.spec.ts.
+파일: `apps/web/app/bus/*`, `apps/web/app/photo/*`, `tests/e2e/preset-execution.spec.ts`.
 
-Interface: /bus?departure=…&arrival=…&grade=…&weekday=0..6&date=YYYY-MM-DD&auto=1, /photo?maxEdge=…&quality=… . 제공된 이름·ID를 정확히 해석하고 모호하면 사용자 선택.
+버스 인터페이스: `/bus?departure=…&arrival=…&grade=…&weekday=0..6&date=YYYY-MM-DD&auto=1`.
+사진 인터페이스: `/photo?maxEdge=320..4096&quality=0.1..1`.
 
-- [ ] 이름·ID·모호성·요일·명시 날짜 우선순위와 사진 옵션 범위 실패 테스트 추가.
-- [ ] 클라이언트 초기 입력 복원 및 준비된 버스 조건의 단일 자동 조회 구현.
-- [ ] focused 검증 후 `feat: 저장한 버스와 사진 조건으로 바로 실행` 커밋·푸시.
+- [x] 터미널 이름·ID와 명시된 서울/대전 별칭 해석, 모호한 이름과 없는 등급의 자동 조회 중단
+- [x] 명시 날짜 우선, 한국 날짜 기준 오늘·다음 요일 계산
+- [x] 목록 준비 뒤 유효 조건의 단일 자동 조회, 사진 조건 복원과 범위 오류 안내
+- [x] 단위·브라우저 회귀 및 `e0e5966` 커밋·푸시
 
-## Task 3: 체크리스트·타이머
+## Task 3: 11개 작업 계약과 필요한 정보 질문
 
-Files: packages/contracts/src/buttonIntent.ts와 테스트, packages/connectors/src/gemini.ts와 테스트, apps/web/app/routines/*, tests/e2e/routines.spec.ts.
+파일: `packages/contracts/src/buttonIntent.ts`, `packages/connectors/src/gemini.ts`, `apps/web/app/routines/*` 및 테스트.
 
-Interface: actionKind checklist의 fixedInputs.items는 줄바꿈 구분 1~20개 항목(전체 200자); timer의 fixedInputs.minutes는 정수 1~180. RoutineRunner({actionKind: 'checklist'|'timer', fixedInputs, storageKey}) 컴포넌트를 제공한다.
+작업: `weather`, `bus_schedule`, `photo_compress`, `checklist`, `timer`, `dday`, `split_bill`, `unit_convert`, `text_cleanup`, `random_pick`, `counter`.
 
-- [ ] 계약 경계 및 실제 타이머 종료 시각 연산을 실패 테스트로 검증.
-- [ ] 자연어 분류·결정적 타이머 단축 입력·RoutineRunner·도구 페이지 구현.
-- [ ] focused 검증 후 `feat: 준비물 체크리스트와 생활 타이머 추가` 커밋·푸시.
+- [x] 작업별 허용 필드·숫자·날짜·목록 범위와 필수 입력 계약
+- [x] `날씨` 등 짧은 이름으로 시작해 필요한 값을 한 항목씩 질문하고 답을 누적
+- [x] 규칙 기반 짧은 요청 처리, 자유로운 문장의 Gemini 해석, 입력 오류 재질문
+- [x] 체크리스트·종료 시각 타이머와 로컬 상태 복원
+- [x] 단위·브라우저 회귀 및 `3a2b844` 커밋·푸시
 
-## Task 4: 보관함·편집·백업·전달 통합
+## Task 4: 통합 보관함과 생활 실행기
 
-Files: apps/web/app/create/*, apps/web/app/page.tsx, tests/e2e/library.spec.ts, README.md, SDD.md.
+파일: `apps/web/app/create/*`, `apps/web/app/page.tsx`, `tests/e2e/library.spec.ts`, `README.md`, `SDD.md`.
 
-Interface: GeneratedButton에 optional favorite, updatedAt. 저장/편집/공유/백업 모두 parseButtonIntent로 검사. 백업은 {format:'hanbeonman-buttons', version:1, buttons:[…]}. 공유는 /create#button=encodeURIComponent(JSON.stringify(createIntent)). 파일과 링크는 실행하지 않고 검토한다.
+백업: `{format:'hanbeonman-buttons',version:1,buttons:[…]}`.
+설정 링크: `/create#button=encodeURIComponent(JSON.stringify(createIntent))`.
 
-- [ ] 중복 ID·손상 데이터·내보내기/가져오기·한도 초과·잘못된 작업 계약 실패 테스트 추가.
-- [ ] 보관함 저장 함수, 편집기, 백업/복원, 링크 초안, 실행기와 템플릿 연결.
-- [ ] 생성→편집→저장→실행, 삭제 복구, 파일·링크 복원 브라우저 테스트.
-- [ ] 전체 테스트·타입·빌드·비밀 검사, 화면 검토 후 `feat: 내 버튼 편집과 백업 공유 완성` 커밋·푸시.
-- [ ] 배포 API·화면 확인 및 SDD 완료/후속 항목 갱신.
+- [x] AI 없이 고를 수 있는 11개 템플릿, 초안·저장 버튼 편집, 고정/실행 입력 선택
+- [x] 검색·종류 필터·즐겨찾기·복제·삭제 취소와 최대 50개 저장
+- [x] UUID와 선택 메타데이터, 구버전 부분 버스 버튼 입력 보충
+- [x] UTF-8 크기·계약·중복 ID 검사, 저장 실패 시 원본 보존, 백업 병합과 설정 링크 검토
+- [x] 디데이·더치페이·단위 변환·글 정리·무작위 선택·횟수 실행 카드
+- [x] 실제 날씨 결과 카드, 버스·사진 조건 전달, 루틴 실행기 연결
+- [x] 통합 단위·브라우저 검증 및 `1d04e8c` 커밋·푸시
+
+## 검증과 배포 기준선
+
+2026-09-14 통합 기준선은 단위 테스트 214개, 전체 Playwright 102개 통과다. 이후 여러 줄 입력 접근성 라벨 회귀 3개를 모든 화면 크기에서 추가로 통과해 총 105개 시나리오를 검증했다. 타입 검사·프로덕션 빌드·비밀값 검사, 비밀 검사기 테스트 5개와 Supabase 스키마 검사 1개가 통과했다. 접근성 수정 `f6d0f5d`를 푸시했고 수정 후 빌드도 통과했다. 상세 결과는 [SDD 16.7절](../../../SDD.md#167-구현검증배포-기록)을 따른다.
+
+Production에서 `/create`의 11개 템플릿, 실제 브라우저의 `날씨 → 인천 → 저장 → 날씨 실행`을 페이지 오류 없이 확인했다. 실제 Gemini의 인천 날씨 요청과 금요일 서울→대전 요청이 각각 200 응답·도시 또는 `weekday:5` 조건을 반환했고, 실제 날씨 API의 추가 필드와 오늘 예보를 확인했다.
+
+- [x] 현재 동작을 README·SDD·설계·작업 계획에 반영
+- [x] 추가 접근성 회귀 결과 기록
+- [x] 최종 문서 커밋·푸시
+
+## 후속 계정·운영 출시 작업
+
+- [ ] Supabase Auth 로그인·복구, 소유자 RLS와 서버 CRUD·기기 간 동기화
+- [ ] 로컬 버튼의 선택적 계정 이관·동시 수정 충돌 처리
+- [ ] 서버 토큰 공유·만료·회수, 계정 탈퇴·데이터 삭제
+- [ ] 분산 배포 API 사용량 제한, 오류 관측·비용 상한·운영 대응
+- [ ] 실제 가족의 반복 사용, 독립 완료율·도움 시간·사업 가설 검증
+
+반복 사용 가능한 로컬 버전의 구현 완료와 위 후속 출시 작업을 같은 완료 상태로 표시하지 않는다.
