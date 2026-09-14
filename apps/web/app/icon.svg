@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <title>한번만</title>
+  <rect width="64" height="64" rx="18" fill="#202724"/>
+  <g fill="none" stroke="#fff" stroke-width="4" stroke-linecap="square" stroke-linejoin="round">
+    <path d="M21 14h8M15 21h20"/>
+    <ellipse cx="25" cy="32" rx="8" ry="6"/>
+    <path d="M44 15v25M44 27h7M19 44v7h27"/>
+  </g>
+</svg>
