@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "한번만 | 도움을 다시 쓰는 버튼으로",
-  description: "한 번 보여준 디지털 작업을 가족이 다시 쓸 수 있는 개인용 버튼으로 만듭니다.",
+  description: "날씨·버스·사진부터 체크리스트·타이머·생활 계산까지, 11가지 작업을 말로 만들고 다시 쓰는 개인용 버튼.",
 };
 
 export const viewport: Viewport = {

@@ -16,9 +16,10 @@ export default function Home() {
           <p className="eyebrow">도움을, 다음에도 쓸 수 있게</p>
           <h1><span>한 번의 도움,</span><em>다음부터 스스로.</em></h1>
           <p className="lede">
-            내가 한 번 보여준 일을 기억해 두었다가, 가족이 필요할 때 직접 누르는
-            작은 버튼으로 만들어요.
+            날씨, 버스, 준비물, 생활 계산까지. 원하는 일을 말하고 조건을 저장하면,
+            다음에는 나도 가족도 버튼 하나로 시작할 수 있어요.
           </p>
+          <div className="ready-actions home-primary-actions"><a className="example-action" href="/create#saved-buttons">내 버튼 열기 ↗</a><a className="example-action" href="/create#action-templates">생활 작업 11가지 보기 ↗</a></div>
           <a className="jump-link" href="#how-it-works">
             어떻게 사용하는지 보기 <Arrow />
           </a>
@@ -59,8 +60,8 @@ export default function Home() {
           <li>
             <span className="step-number">01</span>
             <div className="step-icon" aria-hidden="true">☝</div>
-            <h3>한 번 보여주기</h3>
-            <p>지원하는 웹페이지나 사진 도구에서 평소처럼 작업해요.</p>
+            <h3>원하는 일 말하기</h3>
+            <p>“날씨”처럼 짧게 말하거나, 11가지 생활 작업에서 직접 골라요.</p>
           </li>
           <li>
             <span className="step-number">02</span>
@@ -80,7 +81,7 @@ export default function Home() {
       <section className="examples">
         <div className="shell examples-inner">
           <div className="section-heading compact">
-            <p className="eyebrow">생활에서 바로 쓰는 세 가지</p>
+            <p className="eyebrow">11가지 생활 작업 중 이런 일부터</p>
             <h2>서로 다른 일도,<br />같은 마음으로.</h2>
           </div>
           <div className="example-list">
@@ -114,7 +115,7 @@ export default function Home() {
         <div>
           <p className="eyebrow">지금 바로 사용하세요</p>
           <h2 id="ready-title">반복해서 하던 일을<br />버튼 하나로 시작해요.</h2>
-          <p>고속버스 조회 조건은 이름을 붙여 저장할 수 있습니다. 사진과 날씨 도구도 필요한 입력만 넣으면 바로 결과를 받을 수 있어요.</p>
+          <p>날씨·버스·사진부터 준비물 체크리스트, 타이머, 디데이, 더치페이, 단위 변환, 글 정리, 무작위 선택, 횟수 기록까지. 자주 하는 일을 내 버튼으로 모아보세요.</p>
           <div className="ready-actions">
             <a className="example-action" href="/create">말로 버튼 만들기 ↗</a>
             <a className="example-action" href="/bus">버스 버튼 만들기 ↗</a>

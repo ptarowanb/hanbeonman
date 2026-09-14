@@ -28,6 +28,7 @@ h1 em { color: var(--orange); font-style: normal; }
 .lede { max-width: 590px; margin: 34px 0 30px; color: #53626c; font-size: 1.05rem; }
 .jump-link { display: inline-flex; align-items: center; justify-content: center; gap: 26px; min-height: 54px; padding: 10px 20px; border-bottom: 2px solid var(--ink); font-weight: 800; text-decoration: none; }
 .jump-link span { color: var(--orange); font-size: 1.35rem; }
+.home-primary-actions { margin-block: 22px; }
 a:focus-visible { outline: 4px solid var(--yellow); outline-offset: 5px; border-radius: 4px; }
 .hero-art { position: relative; min-height: 470px; display: grid; place-items: center; }
 .mockup-label { position: absolute; z-index: 3; right: 9%; top: 11px; padding: 5px 11px; border: 1px solid var(--ink); border-radius: 999px; background: var(--paper); font-size: .68rem; font-weight: 800; transform: rotate(3deg); }
