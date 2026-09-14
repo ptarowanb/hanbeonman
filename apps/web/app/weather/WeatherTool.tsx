@@ -1,26 +1,14 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-
-type WeatherCurrent = {
-  observedAt: string;
-  temperatureC: number;
-  precipitationMm: number;
-  weatherCode: number;
-  condition: string;
-};
+import { WeatherResultCard, type WeatherApiResult } from "./WeatherResultCard";
 
 type WeatherResponse =
-  | { status: "OK"; location: { name: string }; current: WeatherCurrent; fetchedAt: string; source: { provider: string } }
+  | WeatherApiResult
   | { status: "EMPTY"; query: string }
   | { status: "INVALID_INPUT" | "FAILED"; error?: { message: string } };
 
 const QUICK_CITIES = ["서울", "부산", "대전", "제주", "인천"];
-
-function formatObservedAt(value: string): string {
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? value : date.toLocaleString("ko-KR", { dateStyle: "short", timeStyle: "short" });
-}
 
 export default function WeatherTool() {
   const [city, setCity] = useState("");
@@ -83,23 +71,8 @@ export default function WeatherTool() {
         ))}
       </div>
       {notice && <p className="weather-notice" role="status">{notice}</p>}
-      {result && (
-        <article className="weather-result" aria-live="polite">
-          <div className="weather-result-main">
-            <div>
-              <p className="weather-result-location">{result.location.name} 현재 날씨</p>
-              <strong>{result.current.temperatureC.toFixed(1)}°C</strong>
-            </div>
-            <span className="weather-result-label">{result.current.condition}</span>
-          </div>
-          <dl className="weather-result-details">
-            <div><dt>강수량</dt><dd>{result.current.precipitationMm.toFixed(1)}mm</dd></div>
-            <div><dt>관측 시각</dt><dd>{formatObservedAt(result.current.observedAt)}</dd></div>
-          </dl>
-          <p className="weather-source">{result.source.provider} 공개 데이터 · {formatObservedAt(result.fetchedAt)} 조회</p>
-        </article>
-      )}
-      <p className="weather-boundary">예약이나 알림을 대신하지 않으며, 현재 공개 날씨 정보만 보여줍니다.</p>
+      {result && <WeatherResultCard result={result} />}
+      <p className="weather-boundary">도시별 현재 날씨와 오늘 예보를 확인하세요. 예보는 시간이 지나면 달라질 수 있어요.</p>
     </section>
   );
 }

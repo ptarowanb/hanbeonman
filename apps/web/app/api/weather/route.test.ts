@@ -48,4 +48,17 @@ describe("GET /api/weather", () => {
     expect(response.status).toBe(404);
     await expect(response.json()).resolves.toEqual({ status: "EMPTY", query: "없는도시" });
   });
+
+  it("오늘 예보와 추가 현재 정보를 HTTP 응답에 포함한다", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({
+      current: { time: "2026-09-14T12:00", temperature_2m: 25.4, precipitation: 0, weather_code: 3, apparent_temperature: 28, relative_humidity_2m: 70, wind_speed_10m: 8 },
+      daily: { time: ["2026-09-14"], temperature_2m_min: [22], temperature_2m_max: [29], precipitation_probability_max: [65] },
+    })));
+    const response = await GET(new Request("http://localhost/api/weather?city=인천"));
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({
+      current: { feelsLikeC: 28, humidityPercent: 70, windSpeedKmh: 8 },
+      today: { date: "2026-09-14", minC: 22, maxC: 29, precipitationProbability: 65 },
+    });
+  });
 });

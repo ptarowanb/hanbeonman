@@ -35,10 +35,20 @@ export type WeatherCurrent = {
   precipitationMm: number;
   weatherCode: number;
   condition: string;
+  feelsLikeC?: number;
+  humidityPercent?: number;
+  windSpeedKmh?: number;
+};
+
+export type WeatherToday = {
+  date: string;
+  minC?: number;
+  maxC?: number;
+  precipitationProbability?: number;
 };
 
 export type WeatherResult =
-  | { status: "OK"; location: WeatherLocation; current: WeatherCurrent }
+  | { status: "OK"; location: WeatherLocation; current: WeatherCurrent; today?: WeatherToday }
   | { status: "EMPTY"; query: string };
 
 export class WeatherUpstreamError extends Error {
@@ -67,6 +77,9 @@ const forecastResponseSchema = z.object({
     temperature_2m: z.number().finite(),
     precipitation: z.number().finite().nonnegative(),
     weather_code: z.number().int().min(0).max(99),
+    apparent_temperature: z.number().finite().optional().catch(undefined),
+    relative_humidity_2m: z.number().finite().min(0).max(100).optional().catch(undefined),
+    wind_speed_10m: z.number().finite().nonnegative().optional().catch(undefined),
   }),
 }).passthrough();
 
@@ -83,7 +96,12 @@ export function buildWeatherForecastUrl(location: Pick<WeatherLocation, "latitud
   const url = new URL(FORECAST_BASE_URL);
   url.searchParams.set("latitude", String(location.latitude));
   url.searchParams.set("longitude", String(location.longitude));
-  url.searchParams.set("current", "temperature_2m,precipitation,weather_code");
+  url.searchParams.set("current", "temperature_2m,precipitation,weather_code,apparent_temperature,relative_humidity_2m,wind_speed_10m");
+  url.searchParams.set("daily", "temperature_2m_min,temperature_2m_max,precipitation_probability_max");
+  url.searchParams.set("forecast_days", "1");
+  url.searchParams.set("temperature_unit", "celsius");
+  url.searchParams.set("wind_speed_unit", "kmh");
+  url.searchParams.set("precipitation_unit", "mm");
   url.searchParams.set("timezone", "Asia/Seoul");
   return url;
 }
@@ -99,13 +117,17 @@ export function getWeatherCondition(code: number): string {
   if (code === 2) return "구름 조금";
   if (code === 3) return "흐림";
   if (code === 45 || code === 48) return "안개";
-  if (code >= 51 && code <= 57) return "이슬비";
-  if (code >= 61 && code <= 67) return "비";
-  if (code >= 71 && code <= 77) return "눈";
+  if ([51, 53, 55].includes(code)) return "이슬비";
+  if (code === 56 || code === 57) return "어는 이슬비";
+  if ([61, 63, 65].includes(code)) return "비";
+  if (code === 66 || code === 67) return "어는 비";
+  if ([71, 73, 75].includes(code)) return "눈";
+  if (code === 77) return "싸락눈";
   if (code >= 80 && code <= 82) return "소나기";
   if (code === 85 || code === 86) return "눈 소나기";
-  if (code >= 95) return "뇌우";
-  return "날씨 정보";
+  if (code === 95) return "뇌우";
+  if (code === 96 || code === 99) return "우박을 동반한 뇌우";
+  return "날씨 정보 없음";
 }
 
 export function parseWeatherLocationResponse(payload: unknown): WeatherLocation | null {
@@ -126,6 +148,33 @@ export function parseWeatherForecastResponse(payload: unknown): WeatherCurrent {
     precipitationMm: parsed.data.current.precipitation,
     weatherCode: parsed.data.current.weather_code,
     condition: getWeatherCondition(parsed.data.current.weather_code),
+    ...(parsed.data.current.apparent_temperature !== undefined ? { feelsLikeC: parsed.data.current.apparent_temperature } : {}),
+    ...(parsed.data.current.relative_humidity_2m !== undefined ? { humidityPercent: parsed.data.current.relative_humidity_2m } : {}),
+    ...(parsed.data.current.wind_speed_10m !== undefined ? { windSpeedKmh: parsed.data.current.wind_speed_10m } : {}),
+  };
+}
+
+function parseWeatherToday(payload: unknown, observedAt: string): WeatherToday | undefined {
+  const parsed = z.object({ daily: z.object({
+    time: z.array(z.string()),
+    temperature_2m_min: z.array(z.unknown()).optional().catch(undefined),
+    temperature_2m_max: z.array(z.unknown()).optional().catch(undefined),
+    precipitation_probability_max: z.array(z.unknown()).optional().catch(undefined),
+  }) }).safeParse(payload);
+  if (!parsed.success) return undefined;
+  const date = observedAt.slice(0, 10);
+  const daily = parsed.data.daily;
+  const index = daily.time.indexOf(date);
+  if (index < 0) return undefined;
+  const min = z.number().finite().safeParse(daily.temperature_2m_min?.[index]);
+  const max = z.number().finite().safeParse(daily.temperature_2m_max?.[index]);
+  const probability = z.number().finite().min(0).max(100).safeParse(daily.precipitation_probability_max?.[index]);
+  if (!min.success && !max.success && !probability.success) return undefined;
+  return {
+    date,
+    ...(min.success ? { minC: min.data } : {}),
+    ...(max.success ? { maxC: max.data } : {}),
+    ...(probability.success ? { precipitationProbability: probability.data } : {}),
   };
 }
 
@@ -149,6 +198,8 @@ export async function getWeather(city: string, fetchImpl: WeatherFetch = fetch):
   const location = getKnownWeatherLocation(query)
     ?? parseWeatherLocationResponse(await fetchJson(fetchImpl, buildWeatherGeocodingUrl(query)));
   if (!location) return { status: "EMPTY", query };
-  const current = parseWeatherForecastResponse(await fetchJson(fetchImpl, buildWeatherForecastUrl(location)));
-  return { status: "OK", location, current };
+  const payload = await fetchJson(fetchImpl, buildWeatherForecastUrl(location));
+  const current = parseWeatherForecastResponse(payload);
+  const today = parseWeatherToday(payload, current.observedAt);
+  return { status: "OK", location, current, ...(today ? { today } : {}) };
 }
