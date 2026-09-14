@@ -1,133 +1,61 @@
-const Arrow = () => <span aria-hidden="true">↘</span>;
+import "./home.css";
+
+function HomeIcon({ kind }: { kind: "weather" | "bus" | "photo" | "checklist" | "timer" }) {
+  const paths = {
+    weather: <><circle cx="12" cy="12" r="4" /><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5" /></>,
+    bus: <><rect x="5" y="3" width="14" height="16" rx="3" /><path d="M5 11h14M8 19v2m8-2v2M9 6h6M8 15h1m6 0h1" /></>,
+    photo: <><rect x="3" y="3" width="18" height="18" rx="3" /><circle cx="8" cy="8" r="1.5" /><path d="m3 17 6-6 4 4 3-3 5 5" /></>,
+    checklist: <><rect x="4" y="3" width="16" height="18" rx="3" /><path d="m8 9 1 1 2-2m2 1h3m-8 6 1 1 2-2m2 1h3" /></>,
+    timer: <><circle cx="12" cy="13" r="8" /><path d="M12 9v4l2 2M9 2h6m-3 0v3m6 1 1-1" /></>,
+  };
+  return <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths[kind]}</svg>;
+}
+
+function Arrow() {
+  return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" /></svg>;
+}
 
 export default function Home() {
   return (
-    <main>
-      <header className="site-header shell">
-        <a className="brand" href="#top" aria-label="한번만 처음으로">
-          <span className="brand-mark" aria-hidden="true">한</span>
-          <span>한번만</span>
-        </a>
-        <span className="status"><i aria-hidden="true" /> 개인용 작업 도구</span>
+    <main className="home-page" id="top">
+      <header className="site-header shell home-header">
+        <a className="brand" href="#top" aria-label="한번만 처음으로"><span className="brand-mark" aria-hidden="true">한</span><span>한번만</span></a>
+        <nav aria-label="주요 메뉴" className="home-nav"><a href="/create#action-templates">생활 도구</a><a href="/create#saved-buttons" className="home-nav-library">내 버튼 <Arrow /></a></nav>
       </header>
-
-      <section className="hero shell" id="top">
-        <div className="hero-copy">
-          <p className="eyebrow">도움을, 다음에도 쓸 수 있게</p>
-          <h1><span>한 번의 도움,</span><em>다음부터 스스로.</em></h1>
-          <p className="lede">
-            날씨, 버스, 준비물, 생활 계산까지. 원하는 일을 말하고 조건을 저장하면,
-            다음에는 나도 가족도 버튼 하나로 시작할 수 있어요.
-          </p>
-          <div className="ready-actions home-primary-actions"><a className="example-action" href="/create#saved-buttons">내 버튼 열기 ↗</a><a className="example-action" href="/create#action-templates">생활 작업 11가지 보기 ↗</a></div>
-          <a className="jump-link" href="#how-it-works">
-            어떻게 사용하는지 보기 <Arrow />
-          </a>
+      <section className="home-hero shell">
+        <div className="home-hero-copy">
+          <p className="home-eyebrow">매일의 일을 더 간단하게</p>
+          <h1>한 번 만들어두면,<br /><span>다음엔 버튼 하나.</span></h1>
+          <p className="home-lede">날씨부터 여행 준비, 생활 계산까지.<br />자주 하는 일을 나만의 버튼으로 모아보세요.</p>
+          <div className="home-hero-actions"><a className="home-primary-link" href="/create">말로 버튼 만들기 <Arrow /></a><a className="home-secondary-link" href="#how-it-works">어떻게 사용하는지 보기 <span aria-hidden="true">↓</span></a></div>
+          <p className="home-start-note">가입 없이 시작하고, 이 브라우저에 저장해요.</p>
         </div>
-
-        <div className="hero-art" aria-label="도움이 개인용 버튼으로 바뀌는 화면 예시">
-          <span className="mockup-label">사용 예시 · 버튼으로 바로 실행</span>
-          <div className="note note-top">
-            <span>한 번 도와주기</span>
-            <strong>사진을 작게<br />줄여줄게</strong>
-          </div>
-          <div className="thread" aria-hidden="true"><span>1</span><span>2</span><span>3</span></div>
-          <div className="button-card">
-            <span className="mini-label">엄마의 버튼</span>
-            <div className="sun" aria-hidden="true">✦</div>
-            <strong>사진 줄여서<br />파일 만들기</strong>
-            <span className="example-caption">필요한 사진을 고르는 화면이 이어져요</span>
-          </div>
+        <div className="home-preview" aria-label="요청을 나만의 버튼으로 만드는 사용 예시">
+          <div className="home-preview-heading"><span>나의 작은 도구함</span><span className="home-preview-label">사용 예시</span></div>
+          <div className="home-preview-request"><span className="home-preview-request-label">이렇게 말해보세요</span><p>인천 날씨 버튼 만들어줘</p><span className="home-preview-request-arrow" aria-hidden="true"><Arrow /></span></div>
+          <div className="home-preview-divider"><span />내게 필요한 버튼으로<span /></div>
+          <div className="home-preview-row"><span className="home-tool-icon"><HomeIcon kind="weather" /></span><div><strong>인천 날씨</strong><p>외출하기 전에 가볍게 확인</p></div><Arrow /></div>
+          <div className="home-preview-row"><span className="home-tool-icon"><HomeIcon kind="checklist" /></span><div><strong>여행 준비물</strong><p>챙긴 것은 하나씩 체크</p></div><Arrow /></div>
+          <div className="home-preview-row"><span className="home-tool-icon"><HomeIcon kind="timer" /></span><div><strong>25분 집중하기</strong><p>내 리듬에 맞춘 타이머</p></div><Arrow /></div>
+          <p className="home-preview-note">매번 설명하지 않아도, 저장한 조건 그대로.</p>
         </div>
       </section>
-
-      <section className="promise-band" aria-label="서비스 원칙">
-        <div className="shell promise-grid">
-          <p><span>하나.</span> 매번 같은 설명은 줄이고</p>
-          <p><span>둘.</span> 달라지는 것만 물어보고</p>
-          <p><span>셋.</span> 결과를 직접 확인해요</p>
+      <section className="home-principles shell" aria-label="서비스 원칙"><div className="promise-grid"><p><span>01</span> 자주 쓰는 조건을 기억해요</p><p><span>02</span> 필요한 것만 다시 물어요</p><p><span>03</span> 내 버튼으로 모아두세요</p></div></section>
+      <section className="home-tools shell" aria-labelledby="home-tools-title">
+        <div className="home-section-heading"><div><p className="home-eyebrow">일상에 바로 쓰는 도구</p><h2 id="home-tools-title">작은 일부터, 하나씩.</h2></div><a className="home-text-link" href="/create#action-templates">11가지 도구 모두 보기 <Arrow /></a></div>
+        <div className="home-tool-grid">
+          <article className="home-tool-card"><span className="home-tool-icon"><HomeIcon kind="weather" /></span><h3>외출 전, 오늘 날씨</h3><p>자주 확인하는 도시를 저장하고,<br />현재 날씨와 오늘 예보를 확인해요.</p><a href="/weather">오늘 날씨 보기 <Arrow /></a></article>
+          <article className="home-tool-card"><span className="home-tool-icon"><HomeIcon kind="bus" /></span><h3>늘 가는 길의 시간표</h3><p>출발지와 도착지를 정해두고,<br />고속버스 운행 시간을 찾아봐요.</p><a href="/bus">고속버스 버튼 만들기 <Arrow /></a></article>
+          <article className="home-tool-card"><span className="home-tool-icon"><HomeIcon kind="photo" /></span><h3>사진을 원하는 크기로</h3><p>보내기 무거운 사진을 줄여요.<br />사진은 내 기기 안에서 처리돼요.</p><a href="/photo">사진 도구 열기 <Arrow /></a></article>
         </div>
+        <p className="home-more-tools">체크리스트 · 타이머 · 디데이 · 더치페이 · 단위 변환 · 글 정리 · 무작위 선택 · 횟수 세기</p>
       </section>
-
-      <section className="workflow shell" id="how-it-works">
-        <div className="section-heading">
-          <p className="eyebrow">어떻게 사용하나요?</p>
-          <h2>도와준 순간이<br />다음의 방법이 됩니다.</h2>
-          <p>자주 하는 조건을 한 번 저장하면, 다음부터 필요한 입력만 바꿔 바로 실행할 수 있어요.</p>
-        </div>
-
-        <ol className="steps">
-          <li>
-            <span className="step-number">01</span>
-            <div className="step-icon" aria-hidden="true">☝</div>
-            <h3>원하는 일 말하기</h3>
-            <p>“날씨”처럼 짧게 말하거나, 11가지 생활 작업에서 직접 골라요.</p>
-          </li>
-          <li>
-            <span className="step-number">02</span>
-            <div className="step-icon" aria-hidden="true">✎</div>
-            <h3>만들고 검토하기</h3>
-            <p>무엇을 기억하고 무엇을 물어볼지 제안받아 직접 확인해요.</p>
-          </li>
-          <li>
-            <span className="step-number">03</span>
-            <div className="step-icon" aria-hidden="true">↗</div>
-            <h3>버튼 누르고 다시 쓰기</h3>
-            <p>저장한 버튼을 누르면, 필요한 값만 넣어 같은 작업을 다시 할 수 있어요.</p>
-          </li>
-        </ol>
+      <section className="home-how shell" id="how-it-works" aria-labelledby="home-how-title">
+        <div className="home-section-heading"><div><p className="home-eyebrow">복잡한 설정 없이</p><h2 id="home-how-title">말하고, 저장하고, 누르세요.</h2></div></div>
+        <ol className="home-steps"><li><span>01</span><h3>원하는 일을 말해요</h3><p>“날씨”처럼 짧게 입력해도 괜찮아요. 부족한 정보는 이어서 물어볼게요.</p></li><li><span>02</span><h3>내 조건으로 저장해요</h3><p>버튼 이름과 조건을 확인해요. 실행할 때마다 바꿀 정보도 정할 수 있어요.</p></li><li><span>03</span><h3>필요할 때 눌러요</h3><p>내 버튼을 열고 바로 시작해요. 같은 일을 다시 설명할 필요가 없어요.</p></li></ol>
       </section>
-
-      <section className="examples">
-        <div className="shell examples-inner">
-          <div className="section-heading compact">
-            <p className="eyebrow">11가지 생활 작업 중 이런 일부터</p>
-            <h2>서로 다른 일도,<br />같은 마음으로.</h2>
-          </div>
-          <div className="example-list">
-            <article className="example-card transit">
-              <span className="example-type">공개 정보 조회</span>
-              <div className="route" aria-hidden="true"><b>서울</b><i /><b>대전</b></div>
-              <h3>딸네 집 가는<br />차편 찾기</h3>
-              <p>정해 둔 노선과 시간대로 공개된 차편 정보를 찾아보는 예시예요. 실제 좌석 예약과는 구분됩니다.</p>
-            <a className="example-action" href="/bus">고속버스 버튼 만들기 ↗</a>
-            </article>
-            <article className="example-card photo">
-              <span className="example-type">기기 안에서 사진 처리</span>
-              <div className="crop-mark" aria-hidden="true"><span>원본</span><b>작게</b></div>
-              <h3>사진 줄여서<br />파일 만들기</h3>
-              <p>정해 둔 크기와 형식으로 사진을 바꾸는 예시예요. 사진은 사용하는 사람의 브라우저에서 처리합니다.</p>
-              <a className="example-action" href="/photo">사진 도구 열기 ↗</a>
-            </article>
-            <article className="example-card weather">
-              <span className="example-type">공개 생활 정보 조회</span>
-              <div className="weather-sun" aria-hidden="true">☼</div>
-              <h3>외출 전<br />오늘 날씨 확인</h3>
-              <p>도시를 한 번 고르면 현재 기온과 강수량을 바로 확인하는 생활 버튼이에요.</p>
-              <a className="example-action" href="/weather">오늘 날씨 보기 ↗</a>
-            </article>
-          </div>
-        </div>
-      </section>
-
-      <section className="ready shell" aria-labelledby="ready-title">
-        <span className="ready-stamp" aria-hidden="true">한 번</span>
-        <div>
-          <p className="eyebrow">지금 바로 사용하세요</p>
-          <h2 id="ready-title">반복해서 하던 일을<br />버튼 하나로 시작해요.</h2>
-          <p>날씨·버스·사진부터 준비물 체크리스트, 타이머, 디데이, 더치페이, 단위 변환, 글 정리, 무작위 선택, 횟수 기록까지. 자주 하는 일을 내 버튼으로 모아보세요.</p>
-          <div className="ready-actions">
-            <a className="example-action" href="/create">말로 버튼 만들기 ↗</a>
-            <a className="example-action" href="/bus">버스 버튼 만들기 ↗</a>
-            <a className="example-action" href="/weather">날씨 확인하기 ↗</a>
-          </div>
-        </div>
-      </section>
-
-      <footer className="shell">
-        <a className="brand" href="#top"><span className="brand-mark" aria-hidden="true">한</span><span>한번만</span></a>
-        <p>도움을 받는 사람이 다음에는 스스로 할 수 있도록.</p>
-      </footer>
+      <section className="home-bottom shell" aria-labelledby="home-bottom-title"><div><h2 id="home-bottom-title">매일의 번거로움을, 한 번만.</h2><p>지금 필요한 버튼 하나부터 만들어보세요.</p></div><a className="home-primary-link" href="/create">내 첫 버튼 만들기 <Arrow /></a></section>
+      <footer className="home-footer shell"><a className="brand" href="#top"><span className="brand-mark" aria-hidden="true">한</span><span>한번만</span></a><p>자주 하는 일을, 더 간단하게.</p><a href="/create">내 도구함 열기 <Arrow /></a></footer>
     </main>
   );
 }
