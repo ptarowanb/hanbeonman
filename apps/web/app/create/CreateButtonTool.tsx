@@ -2,7 +2,7 @@
 
 import { parseButtonIntent, type ButtonIntent } from "@hanbeonman/contracts";
 import { type ChangeEvent, type FormEvent, useEffect, useRef, useState } from "react";
-import { ACTIONS, ACTION_KINDS, actionSummary, makeTemplate } from "./actionCatalog";
+import { ACTIONS, ACTION_KINDS, ACTION_GROUPS, type ActionGroup, actionSummary, makeTemplate } from "./actionCatalog";
 import { STORAGE_KEY, MAX_BUTTONS, MAX_BACKUP_SIZE, buildButtonShareUrl, buttonToIntent, createGeneratedButton, exportButtonBackup, importButtonBackup, mergeButtonBackup, parseGeneratedButtons, parseSharedButton, writeGeneratedButtons, type CreateIntent, type GeneratedButton } from "./buttonStorage";
 import DraftEditor from "./DraftEditor";
 import ButtonRunner from "./ButtonRunner";
@@ -26,6 +26,8 @@ export default function CreateButtonTool() {
   const [loaded,setLoaded]=useState(false);
   const [query,setQuery]=useState("");
   const [category,setCategory]=useState("all");
+  const [templateQuery,setTemplateQuery]=useState("");
+  const [templateGroup,setTemplateGroup]=useState<ActionGroup>("all");
   const [onlyFavorites,setOnlyFavorites]=useState(false);
   const [deleted,setDeleted]=useState<GeneratedButton|null>(null);
   const [running,setRunning]=useState<GeneratedButton|null>(null);
@@ -133,8 +135,10 @@ export default function CreateButtonTool() {
     }catch(error){setNotice(messageOf(error));}
   }
   const visible=buttons.filter(button=>(category==="all"||button.actionKind===category)&&(!onlyFavorites||button.favorite)&&(`${button.title} ${button.summary} ${actionSummary(button)}`).toLocaleLowerCase("ko").includes(query.trim().toLocaleLowerCase("ko"))).sort((a,b)=>Number(Boolean(b.favorite))-Number(Boolean(a.favorite)));
+  const templateKinds=new Set<string>(ACTION_GROUPS[templateGroup].kinds);
+  const visibleTemplates=ACTION_KINDS.filter(kind=>templateKinds.has(kind)&&`${ACTIONS[kind].label} ${ACTIONS[kind].description}`.toLocaleLowerCase("ko").includes(templateQuery.trim().toLocaleLowerCase("ko")));
   return <>
-    <nav className="library-jump" aria-label="버튼 화면 바로가기"><a href="#action-templates">생활 도구 <span className="library-count">11</span></a><a href="#saved-buttons">내 버튼 <span className="library-count">{buttons.length}</span></a><span className="library-storage-note"><i aria-hidden="true"/>이 브라우저에 저장돼요</span></nav>
+    <nav className="library-jump" aria-label="버튼 화면 바로가기"><a href="#action-templates">생활 도구 <span className="library-count">{ACTION_KINDS.length}</span></a><a href="#saved-buttons">내 버튼 <span className="library-count">{buttons.length}</span></a><span className="library-storage-note"><i aria-hidden="true"/>이 브라우저에 저장돼요</span></nav>
     <section className="create-tool" aria-labelledby="create-tool-title">
       <div className="create-tool-heading"><span className="composer-icon" aria-hidden="true">✧</span><div><h2 id="create-tool-title">어떤 일을 간단하게 만들까요?</h2><p>“날씨”처럼 짧게 적어도 좋아요. 필요한 정보는 이어서 물어볼게요.</p></div></div>
       <form className="create-form" onSubmit={submitRequest}><label className="sr-only" htmlFor="button-request">만들고 싶은 작업</label><textarea id="button-request" value={request} onChange={event=>setRequest(event.target.value)} placeholder="예: 인천 날씨, 25분 집중 타이머" maxLength={1000}/><div className="create-form-footer"><span>내 말로 만들기 <span className="composer-count">{request.length}/1,000</span></span><button className="create-submit" type="submit" disabled={isLoading}>{isLoading?"만드는 중…":"버튼 만들기"}<span aria-hidden="true"> ↗</span></button></div></form>
@@ -142,7 +146,10 @@ export default function CreateButtonTool() {
       {clarification&&<form className="create-clarify" onSubmit={submitAnswer}><p className="create-card-label">한 가지만 더 알려주세요</p><p className="create-question">{clarification.clarifyingQuestion}</p><label htmlFor="button-clarification">추가 정보</label><div className="create-clarify-row"><textarea id="button-clarification" value={answer} onChange={event=>setAnswer(event.target.value)} maxLength={200} required rows={2} placeholder="질문에 대한 답을 적어주세요. 목록은 한 줄에 하나씩 입력할 수 있어요."/><button className="create-secondary" type="submit" disabled={isLoading}>이 정보로 계속</button></div><button className="library-text-button" type="button" onClick={()=>showDraft({...clarification,intent:"create_button",clarifyingQuestion:null})}>실행할 때 물어보는 버튼으로 만들기</button></form>}
       <div ref={editorRef}>{draft&&<DraftEditor key={editorVersion} intent={draft} onSave={saveDraft} onCancel={()=>{setDraft(null);setEditingId(null);}} isEditing={Boolean(editingId)}/>}</div>
     </section>
-    <section id="action-templates" className="library-templates" aria-labelledby="templates-title"><div className="library-section-heading"><div><h2 id="templates-title">생활 도구</h2><p>하나를 골라 내 일상에 맞게 바꿔보세요.</p></div><span className="library-section-count">11가지 도구</span></div><div className="library-template-grid">{ACTION_KINDS.map(kind=><button key={kind} type="button" aria-label={`${ACTIONS[kind].label} 템플릿`} onClick={()=>showDraft(makeTemplate(kind))}><span className="library-symbol"><ActionIcon kind={kind}/></span><span className="library-template-copy"><strong>{ACTIONS[kind].label}</strong><small>{ACTIONS[kind].description}</small></span><span className="library-template-cta" aria-hidden="true">↗</span></button>)}</div></section>
+    <section id="action-templates" className="library-templates" aria-labelledby="templates-title"><div className="library-section-heading"><div><h2 id="templates-title">생활 도구</h2><p>하나를 골라 내 일상에 맞게 바꿔보세요.</p></div><span className="library-section-count" aria-live="polite">{visibleTemplates.length} / {ACTION_KINDS.length}가지 도구</span></div>
+      <div className="library-template-filters"><div className="library-categories" aria-label="생활 도구 분류">{(Object.keys(ACTION_GROUPS) as ActionGroup[]).map(group=><button key={group} type="button" aria-pressed={templateGroup===group} onClick={()=>setTemplateGroup(group)}>{ACTION_GROUPS[group].label}</button>)}</div><label className="library-field library-template-search"><span className="sr-only">생활 도구 검색</span><input type="search" placeholder="도구 검색" value={templateQuery} onChange={event=>setTemplateQuery(event.target.value)}/></label></div>
+      {!visibleTemplates.length&&<div className="library-template-empty"><p>조건에 맞는 도구가 없어요.</p><button type="button" className="library-text-button" onClick={()=>{setTemplateQuery("");setTemplateGroup("all");}}>도구 검색 초기화</button></div>}
+      <div className="library-template-grid">{visibleTemplates.map(kind=><button key={kind} type="button" aria-label={`${ACTIONS[kind].label} 템플릿`} onClick={()=>showDraft(makeTemplate(kind))}><span className="library-symbol"><ActionIcon kind={kind}/></span><span className="library-template-copy"><strong>{ACTIONS[kind].label}</strong><small>{ACTIONS[kind].description}</small></span><span className="library-template-cta" aria-hidden="true">↗</span></button>)}</div></section>
     <section id="saved-buttons" className="create-saved library-saved" aria-labelledby="saved-buttons-title">
       <div className="create-saved-heading"><div><h2 id="saved-buttons-title">내 보관함</h2><p className="library-section-description">한 번 만들어 둔 버튼, 필요할 때 바로 실행하세요.</p></div><span>{buttons.length} / {MAX_BUTTONS}</span></div>
       <div className="library-filters"><label className="library-field"><span>내 버튼 검색</span><input type="search" value={query} onChange={e=>setQuery(e.target.value)} placeholder="이름, 지역, 조건 검색"/></label><label className="library-field"><span>작업 종류</span><select value={category} onChange={e=>setCategory(e.target.value)}><option value="all">전체 작업</option>{ACTION_KINDS.map(kind=><option key={kind} value={kind}>{ACTIONS[kind].label}</option>)}</select></label><button className="create-secondary" type="button" aria-pressed={onlyFavorites} onClick={()=>setOnlyFavorites(!onlyFavorites)}>★ 즐겨찾기만</button></div>

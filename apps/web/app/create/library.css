@@ -52,6 +52,15 @@
 .library-section-heading h2, .create-saved-heading h2 { margin: 0; font-size: 20px; line-height: 1.5; letter-spacing: -.03em; font-weight: 600; }
 .library-section-heading p, .library-section-description { margin: 5px 0 0; color: var(--muted); font-size: 13px; }
 .library-section-count { color: var(--muted); font-size: 12px; white-space: nowrap; }
+.library-template-filters { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 22px; }
+.library-categories { display: flex; flex-wrap: wrap; gap: 5px; }
+.library-categories button { min-height: 44px; padding: 8px 13px; border: 1px solid transparent; border-radius: 8px; color: var(--muted); background: transparent; font-size: 12px; cursor: pointer; }
+.library-categories button:hover { background: #eef2ef; }
+.library-categories button[aria-pressed=true] { background: var(--accent-soft); color: var(--accent); border-color: #cbdacf; font-weight: 600; }
+.library-template-search { width: 210px; }
+.library-template-search input { min-height: 44px; font-size: 13px; }
+.library-template-empty { padding: 28px; border: 1px dashed var(--line); border-radius: 12px; text-align: center; margin-top: 20px; }
+.library-template-empty p { margin: 0; font-size: 14px; color: var(--muted); }
 .library-template-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 20px; }
 .library-template-grid > button { display: flex; position: relative; align-items: center; gap: 13px; min-height: 100px; min-width: 0; padding: 18px 15px; border: 1px solid var(--line); border-radius: 12px; background: #fff; text-align: left; font: inherit; color: var(--ink); cursor: pointer; }
 .library-template-grid > button:hover { background: #fcfdfc; border-color: #9caf9f; box-shadow: 0 4px 12px #20312805; }
@@ -122,6 +131,10 @@
   .library-section-heading h2, .create-saved-heading h2 { font-size: 19px; }
   .library-section-heading p, .library-section-description { font-size: 12px; }
   .library-section-count { display: none; }
+  .library-template-filters { flex-direction: column; align-items: stretch; gap: 12px; margin-top: 18px; }
+  .library-template-search { width: 100%; }
+  .library-categories { gap: 3px; }
+  .library-categories button { padding-inline: 10px; }
   .library-template-grid { gap: 9px; margin-top: 18px; }
   .library-template-grid > button { flex-direction: column; align-items: flex-start; gap: 12px; min-height: 145px; padding: 16px; }
   .library-symbol { width: 34px; height: 34px; border-radius: 9px; }

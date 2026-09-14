@@ -1,4 +1,5 @@
 import "./home.css";
+import { ACTION_KINDS } from "./create/actionCatalog";
 
 function HomeIcon({ kind }: { kind: "weather" | "bus" | "photo" | "checklist" | "timer" }) {
   const paths = {
@@ -42,7 +43,7 @@ export default function Home() {
       </section>
       <section className="home-principles shell" aria-label="서비스 원칙"><div className="promise-grid"><p><span>01</span> 자주 쓰는 조건을 기억해요</p><p><span>02</span> 필요한 것만 다시 물어요</p><p><span>03</span> 내 버튼으로 모아두세요</p></div></section>
       <section className="home-tools shell" aria-labelledby="home-tools-title">
-        <div className="home-section-heading"><div><p className="home-eyebrow">일상에 바로 쓰는 도구</p><h2 id="home-tools-title">작은 일부터, 하나씩.</h2></div><a className="home-text-link" href="/create#action-templates">11가지 도구 모두 보기 <Arrow /></a></div>
+        <div className="home-section-heading"><div><p className="home-eyebrow">일상에 바로 쓰는 도구</p><h2 id="home-tools-title">작은 일부터, 하나씩.</h2></div><a className="home-text-link" href="/create#action-templates">{ACTION_KINDS.length}가지 도구 모두 보기 <Arrow /></a></div>
         <div className="home-tool-grid">
           <article className="home-tool-card"><span className="home-tool-icon"><HomeIcon kind="weather" /></span><h3>외출 전, 오늘 날씨</h3><p>자주 확인하는 도시를 저장하고,<br />현재 날씨와 오늘 예보를 확인해요.</p><a href="/weather">오늘 날씨 보기 <Arrow /></a></article>
           <article className="home-tool-card"><span className="home-tool-icon"><HomeIcon kind="bus" /></span><h3>늘 가는 길의 시간표</h3><p>출발지와 도착지를 정해두고,<br />고속버스 운행 시간을 찾아봐요.</p><a href="/bus">고속버스 버튼 만들기 <Arrow /></a></article>

@@ -7,6 +7,6 @@ export default function ActionFieldControl({ field, value, onChange, disabled = 
   return <div className="library-field"><label htmlFor={id}>{field.label}</label>
     {field.options ? <select {...common}><option value="">선택해주세요</option>{field.options.map(([v,l])=><option key={v} value={v}>{l}</option>)}</select>
     : field.kind === "multiline" ? <textarea {...common} maxLength={200} rows={4} placeholder={field.placeholder} />
-    : <input {...common} type={field.kind === "number" ? "number" : field.kind === "date" ? "date" : "text"} min={field.min} max={field.max} step={field.step ?? (field.kind === "number" ? "any" : undefined)} maxLength={field.type==="city"?40:200} placeholder={field.placeholder} />}
+    : <input {...common} type={field.kind === "number" ? "number" : field.kind === "date" ? "date" : "text"} min={field.min} max={field.max} step={field.step ?? (field.kind === "number" ? "any" : undefined)} maxLength={field.type==="city"?40:["destination","origin"].includes(field.key)?100:200} placeholder={field.placeholder} />}
   </div>;
 }

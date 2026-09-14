@@ -104,9 +104,10 @@ function buildPrompt(message: string): string {
     `actionKind는 ${ButtonActionKindSchema.options.join(", ")} 중 하나만 사용하세요.`,
     "고정값은 다음 실행에도 유지할 값이고 requiredInputs는 실행 때 받을 값입니다.",
     "도시·출발지·도착지·시간 등 사용자가 말하지 않은 값은 임의로 가정하지 마세요. 필수값이 없으면 한국어 질문과 required:true 입력을 포함한 clarify를 반환하세요. 값을 받으면 create_button 초안을 만드세요.",
-    "숫자 필드(minutes, weekday, maxEdge, quality, amount, people, value, step)는 JSON 숫자로 반환하세요. 실행 입력에서는 type:text를 사용하세요. date 입력의 type은 date입니다.",
+    "숫자 필드(minutes, weekday, maxEdge, quality, amount, people, value, step, price, rate, priceA, quantityA, priceB, quantityB, baseServings, targetServings)는 JSON 숫자로 반환하세요. 실행 입력에서는 type:text를 사용하세요. date 입력의 type은 date입니다.",
     "버스 요청에 금요일처럼 요일만 있고 달력 날짜가 없으면 오늘 날짜로 고정하지 마세요. 요일을 명세에 보존하고 실행기는 오늘을 포함한 가장 가까운 해당 요일을 사용해야 하며, 이번 주에 이미 지난 요일은 다음 주로 계산합니다. 달력 날짜가 명시되면 그 날짜를 우선합니다.",
-    "로그인·결제·송금·임의 URL·JavaScript·셸·DOM 조작은 unsupported로 반환하세요.",
+    "로그인·결제·송금·임의 URL 직접 접속·데이터 수집·JavaScript·셸·DOM 조작은 unsupported로 반환하세요. qr_code와 text_copy는 URL을 포함한 문자열을 인코딩하거나 복사할 뿐 접속하지 않으므로 허용합니다. directions는 지도에서 사용자가 경로를 확인하는 작업이며 목적지와 출발지를 문자열로만 저장합니다.",
+    "할인 계산은 원화 정가와 할인율 한 번만 계산합니다. 단가 비교는 두 상품을 같은 단위로 맞춘 수량을 사용하며 서로 다른 단위는 사용자에게 확인하세요. 레시피 재료는 '쌀 200 g' 또는 '설탕 1/2 큰술'처럼 한 줄에 재료명, 수량, 단위를 적습니다.",
     "모든 필드를 빠짐없이 반환하고, 사용하지 않는 문자열 필드는 null, fixedInputs는 객체, requiredInputs는 배열로 반환하세요.",
     "등록 작업 카탈로그:",
     JSON.stringify([
@@ -121,6 +122,12 @@ function buildPrompt(message: string): string {
       { actionKind: "text_cleanup", description: "글 공백 또는 중복 줄 정리", fields: { mode: "선택 trim|deduplicate, 기본 trim", text: "선택 또는 실행 때 입력하는 글" } },
       { actionKind: "random_pick", description: "점심 메뉴 등 후보 중 무작위 선택", fields: { options: "필수 줄바꿈 목록 2~20개, 서로 다른 후보 최소 2개, 빈 줄 제외, 전체 200자 이하" } },
       { actionKind: "counter", description: "운동·습관 횟수 기록", fields: { step: "선택 정수 1~1000, 기본 1" } },
+      { actionKind: "qr_code", description: "링크나 글을 QR 코드로 만들고 이미지로 저장", fields: { text: "필수 문자열 1~200자, URL 포함 가능" } },
+      { actionKind: "directions", description: "저장한 목적지로 지도 길찾기 열기", fields: { destination: "필수 목적지 이름·주소 1~100자", origin: "선택 출발지 이름·주소 1~100자, 생략하면 지도에서 결정", mode: "선택 transit|driving|walking|bicycling" } },
+      { actionKind: "text_copy", description: "주소·안내 문구처럼 자주 쓰는 글을 복사", fields: { text: "필수 복사할 글 1~200자" } },
+      { actionKind: "discount", description: "원화 정가와 할인율로 할인액과 결제금액 계산", fields: { price: "필수 정수 0~1000000000000원", rate: "필수 숫자 0~100%" } },
+      { actionKind: "unit_price", description: "상품 두 개의 같은 단위당 가격 비교", fields: { priceA: "필수 정수 0~1000000000000원", quantityA: "필수 숫자 0.001~1000000000", priceB: "필수 정수 0~1000000000000원", quantityB: "필수 숫자 0.001~1000000000, A와 같은 단위", unit: "선택 g|ml|개" } },
+      { actionKind: "recipe_scale", description: "인분 수에 맞춰 레시피 재료량 계산", fields: { baseServings: "필수 숫자 0.1~1000", targetServings: "필수 숫자 0.1~1000", ingredients: "필수 재료명 수량 단위 줄바꿈 목록 1~20개, 전체 200자 이하" } },
     ]),
     "<user_request>",
     message,
@@ -141,6 +148,12 @@ const SHORTCUTS: Record<string, ShortcutConfig> = {
   무작위선택: { actionKind: "random_pick", title: "무작위 선택", summary: "입력한 후보 중 하나를 뽑습니다.", question: "선택할 후보를 한 줄에 하나씩 2~20개 입력해주세요.", fields: [["options", "후보 목록", "text"]] },
   횟수기록: { actionKind: "counter", title: "횟수 기록", summary: "버튼을 누를 때마다 횟수를 기록합니다.", question: "", fields: [] },
   사진압축: { actionKind: "photo_compress", title: "사진 압축", summary: "실행할 때 선택한 사진의 용량을 줄입니다.", question: "", fields: [] },
+  qr코드: { actionKind: "qr_code", title: "QR 코드", summary: "입력한 링크나 글을 QR 코드 이미지로 만듭니다.", question: "QR 코드에 담을 링크나 글을 입력해주세요. 200자까지 담을 수 있어요.", fields: [["text", "QR에 담을 내용", "text"]] },
+  길찾기: { actionKind: "directions", title: "길찾기", summary: "저장한 목적지의 경로를 지도에서 확인합니다.", question: "어디로 이동하나요? 목적지 이름이나 주소를 입력해주세요.", fields: [["destination", "목적지", "text"]] },
+  주소복사: { actionKind: "text_copy", title: "자주 쓰는 글 복사", summary: "저장한 주소나 안내 문구를 바로 복사합니다.", question: "복사할 주소나 글을 입력해주세요. 200자까지 저장할 수 있어요.", fields: [["text", "복사할 글", "text"]] },
+  할인계산: { actionKind: "discount", title: "할인 계산", summary: "정가와 할인율로 할인액과 결제금액을 계산합니다.", question: "정가와 할인율을 입력해주세요.", fields: [["price", "정가(원)", "text"], ["rate", "할인율(%)", "text"]] },
+  단가비교: { actionKind: "unit_price", title: "단가 비교", summary: "두 상품의 같은 단위당 가격을 비교합니다.", question: "상품별 가격과 같은 단위의 수량을 입력해주세요.", fields: [["priceA", "A 가격(원)", "text"], ["quantityA", "A 수량", "text"], ["priceB", "B 가격(원)", "text"], ["quantityB", "B 수량", "text"]] },
+  레시피분량: { actionKind: "recipe_scale", title: "레시피 분량", summary: "만들 인분 수에 맞춰 재료량을 계산합니다.", question: "기본 인분, 만들 인분, 재료 목록을 입력해주세요.", fields: [["baseServings", "기본 인분", "text"], ["targetServings", "만들 인분", "text"], ["ingredients", "재료 목록", "text"]] },
 };
 
 function shortcutQuestion(config: ShortcutConfig, key: string | undefined, fixedInputs: Record<string, string | number | boolean>): string {
@@ -152,6 +165,13 @@ function shortcutQuestion(config: ShortcutConfig, key: string | undefined, fixed
   if (key === "value") return "변환할 숫자는 얼마인가요?";
   if (key === "from") return "원래 단위는 무엇인가요? mm, cm, m, km, g, kg, 섭씨, 화씨 중 입력해주세요.";
   if (key === "to") return `${String(fixedInputs.from ?? "원래 단위")}를 어떤 단위로 바꿀까요? 같은 종류의 단위를 입력해주세요.`;
+  if (key === "price") return "정가는 얼마인가요? 원 단위 금액을 입력해주세요. 예: 50,000원";
+  if (key === "rate") return "할인율은 몇 %인가요? 0~100 사이로 입력해주세요.";
+  if (key === "priceA" || key === "priceB") return `${key === "priceA" ? "A" : "B"} 상품 가격은 얼마인가요? 원 단위 금액을 입력해주세요.`;
+  if (key === "quantityA" || key === "quantityB") return `${key === "quantityA" ? "A" : "B"} 상품 수량은 얼마인가요? 두 상품을 같은 단위로 맞춰 숫자만 입력해주세요. 예: 500g이면 500`;
+  if (key === "baseServings") return "원래 레시피는 몇 인분인가요? 예: 2인분";
+  if (key === "targetServings") return "몇 인분을 만들까요? 예: 3인분";
+  if (key === "ingredients") return "원래 레시피의 재료를 한 줄에 하나씩 입력해주세요. 예: 쌀 200 g / 설탕 1/2 큰술 (전체 200자까지)";
   return config.question;
 }
 
@@ -170,6 +190,16 @@ function shortcutDraft(config: ShortcutConfig, fixedInputs: Record<string, strin
 }
 
 function readShortcutAnswer(key: string, answer: string): string | number {
+  if (["price", "priceA", "priceB"].includes(key)) {
+    const price = answer.replace(/\s*원$/u, "").replace(/,/gu, "").trim();
+    const match = price.match(/^(\d+(?:\.\d+)?)\s*(만|천)?$/u);
+    return match ? Number(match[1]) * (match[2] === "만" ? 10000 : match[2] === "천" ? 1000 : 1) : Number.NaN;
+  }
+  if (["rate", "quantityA", "quantityB", "baseServings", "targetServings"].includes(key)) {
+    const suffix = key === "rate" ? /\s*%$/u : key === "baseServings" || key === "targetServings" ? /\s*인분$/u : /$/u;
+    const numeric = answer.replace(suffix, "").replace(/,/gu, "").trim();
+    return /^\d+(?:\.\d+)?$/u.test(numeric) ? Number(numeric) : Number.NaN;
+  }
   if (["minutes", "amount", "people", "value"].includes(key)) {
     const suffix = key === "minutes" ? /\s*분$/u : key === "amount" ? /\s*원$/u : key === "people" ? /\s*명$/u : /$/u;
     const numeric = answer.replace(suffix, "").replace(/,/gu, "").trim();
@@ -187,8 +217,8 @@ function parseEverydayShortcut(message: string): ButtonIntent | null {
   const [first = "", ...answers] = message.trim().split(/\n추가 정보:\s*/u);
   const normalized = first.trim().replace(/[!?.,。？！]+$/u, "");
   const simpleName = normalized.replace(/\s*(?:버튼(?:을)?\s*)?(?:만들어\s*줘|만들어주세요|생성해\s*줘)$/u, "")
-    .replace(/\s*버튼$/u, "").replace(/\s+/gu, "");
-  const alias: Record<string, string> = { 고속버스: "버스", 버스시간표: "버스", 준비물: "체크리스트", 할일: "체크리스트", 사진: "사진압축", 디데이계산: "디데이", 카운터: "횟수기록", 랜덤선택: "무작위선택" };
+    .replace(/\s*버튼$/u, "").replace(/\s+/gu, "").toLowerCase();
+  const alias: Record<string, string> = { 고속버스: "버스", 버스시간표: "버스", 준비물: "체크리스트", 할일: "체크리스트", 사진: "사진압축", 디데이계산: "디데이", 카운터: "횟수기록", 랜덤선택: "무작위선택", qr: "qr코드", 큐알코드: "qr코드", 글복사: "주소복사", 텍스트복사: "주소복사", 자주쓰는글: "주소복사", 할인: "할인계산", 단가: "단가비교", 레시피: "레시피분량" };
   const config = Object.hasOwn(SHORTCUTS, alias[simpleName] ?? simpleName) ? SHORTCUTS[alias[simpleName] ?? simpleName] : undefined;
   if (config) {
     let inputs: Record<string, string | number | boolean> = {};
@@ -210,6 +240,10 @@ function parseEverydayShortcut(message: string): ButtonIntent | null {
   if (location) return shortcutDraft(SHORTCUTS.날씨!, { city: location.name });
   const timerMatch = normalized.match(/^(\d+)\s*분\s*타이머(?:\s*버튼(?:을)?\s*(?:만들어줘)?)?$/u);
   if (timerMatch) return shortcutDraft(SHORTCUTS.타이머!, { minutes: Number(timerMatch[1]) }) ?? shortcutDraft(SHORTCUTS.타이머!);
+  const directionsMatch = normalized.match(/^([가-힣A-Za-z0-9]+(?:역|공항|터미널|시청|구청|대학교|병원))\s+길\s*찾기$/u);
+  if (directionsMatch && !/(에서|부터|까지)/u.test(directionsMatch[1]!)) return shortcutDraft(SHORTCUTS.길찾기!, { destination: directionsMatch[1]! });
+  const discountMatch = normalized.match(/^(\d[\d,]*(?:\.\d+)?\s*(?:만|천)?\s*원)\s+(\d+(?:\.\d+)?\s*%)\s*할인(?:\s*계산)?$/u);
+  if (discountMatch) return shortcutDraft(SHORTCUTS.할인계산!, { price: readShortcutAnswer("price", discountMatch[1]!), rate: readShortcutAnswer("rate", discountMatch[2]!) }) ?? shortcutDraft(SHORTCUTS.할인계산!);
   return null;
 }
 

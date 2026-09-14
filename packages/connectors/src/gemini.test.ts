@@ -86,16 +86,50 @@ describe("Gemini 자연어 버튼 해석 커넥터", () => {
   it.each([
     ["타이머", "timer"], ["체크리스트", "checklist"], ["버스", "bus_schedule"],
     ["디데이", "dday"], ["더치페이", "split_bill"], ["단위 변환", "unit_convert"], ["무작위 선택", "random_pick"],
+    ["QR코드", "qr_code"], ["길찾기", "directions"], ["주소 복사", "text_copy"],
+    ["할인 계산", "discount"], ["단가 비교", "unit_price"], ["레시피 분량", "recipe_scale"],
   ])("%s만 입력해도 필요한 값을 질문한다", async (message, actionKind) => {
     await expect(interpretButtonRequest(message)).resolves.toMatchObject({ intent: "clarify", actionKind });
   });
 
-  it("등록된 11개 작업과 생성 우선 흐름을 프롬프트에 제공한다", () => {
+  it("등록된 17개 작업과 생성 우선 흐름을 프롬프트에 제공한다", () => {
     const request = buildGeminiInterpretRequest("다음 휴가 디데이", { apiKey: "test-key" });
     const body = JSON.parse(String(request.init.body));
     const prompt = body.contents[0].parts[0].text as string;
-    for (const action of ["weather", "bus_schedule", "photo_compress", "timer", "checklist", "dday", "split_bill", "unit_convert", "text_cleanup", "random_pick", "counter"]) expect(prompt).toContain(action);
+    for (const action of ["weather", "bus_schedule", "photo_compress", "timer", "checklist", "dday", "split_bill", "unit_convert", "text_cleanup", "random_pick", "counter", "qr_code", "directions", "text_copy", "discount", "unit_price", "recipe_scale"]) expect(prompt).toContain(action);
     expect(prompt).toContain("기본 의도는 create_button");
+  });
+
+  it.each([
+    ["QR코드\n추가 정보: https://example.com/menu?a=1&b=2", "qr_code", { text: "https://example.com/menu?a=1&b=2" }],
+    ["주소 복사\n추가 정보: 서울특별시 중구 세종대로 110", "text_copy", { text: "서울특별시 중구 세종대로 110" }],
+    ["강남역 길찾기", "directions", { destination: "강남역" }],
+    ["길찾기\n추가 정보: 서울특별시청", "directions", { destination: "서울특별시청" }],
+    ["5만원 20% 할인", "discount", { price: 50000, rate: 20 }],
+    ["할인 계산\n추가 정보: 5만원\n추가 정보: 20%", "discount", { price: 50000, rate: 20 }],
+    ["단가 비교\n추가 정보: 3000원\n추가 정보: 500\n추가 정보: 5000원\n추가 정보: 1000", "unit_price", { priceA: 3000, quantityA: 500, priceB: 5000, quantityB: 1000 }],
+    ["레시피 분량\n추가 정보: 2인분\n추가 정보: 3인분\n추가 정보: 쌀 200 g\n설탕 1/2 큰술", "recipe_scale", { baseServings: 2, targetServings: 3, ingredients: "쌀 200 g\n설탕 1/2 큰술" }],
+  ])("%s의 입력을 보존한 버튼을 키 없이 생성한다", async (message, actionKind, fixedInputs) => {
+    await expect(interpretButtonRequest(String(message))).resolves.toMatchObject({ intent: "create_button", actionKind, fixedInputs, requiredInputs: [] });
+  });
+
+  it("할인율 오류를 다시 물어보며 이미 받은 가격을 보존한다", async () => {
+    const message = "할인 계산\n추가 정보: 50,000원\n추가 정보: 110%";
+    await expect(interpretButtonRequest(message)).resolves.toMatchObject({
+      intent: "clarify", fixedInputs: { price: 50000 }, requiredInputs: [{ key: "rate", required: true }], clarifyingQuestion: expect.stringContaining("할인율"),
+    });
+    await expect(interpretButtonRequest(`${message}\n추가 정보: 10%`)).resolves.toMatchObject({ intent: "create_button", fixedInputs: { price: 50000, rate: 10 } });
+  });
+
+  it("서로 다른 수량 단위를 임의로 추정하지 않고 수량 입력을 다시 묻는다", async () => {
+    await expect(interpretButtonRequest("단가 비교\n추가 정보: 3000원\n추가 정보: 500g")).resolves.toMatchObject({
+      intent: "clarify", fixedInputs: { priceA: 3000 }, requiredInputs: expect.arrayContaining([{ key: "quantityA", label: expect.any(String), type: "text", required: true }]),
+    });
+  });
+
+  it("복합 경로와 중복 할인 요청을 단순 규칙으로 임의 해석하지 않는다", async () => {
+    await expect(interpretButtonRequest("서울에서 강남역 길찾기")).rejects.toMatchObject({ code: "NOT_CONFIGURED" });
+    await expect(interpretButtonRequest("5만원 20% 할인 후 10% 추가 할인")).rejects.toMatchObject({ code: "NOT_CONFIGURED" });
   });
 
   it("서버 전용 키와 JSON 응답 스키마를 포함한 요청을 만든다", () => {

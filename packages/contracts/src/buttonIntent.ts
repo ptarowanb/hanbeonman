@@ -6,6 +6,7 @@ export type ButtonIntentKind = z.infer<typeof ButtonIntentKindSchema>;
 export const ButtonActionKindSchema = z.enum([
   "weather", "bus_schedule", "photo_compress", "checklist", "timer", "dday",
   "split_bill", "unit_convert", "text_cleanup", "random_pick", "counter",
+  "qr_code", "directions", "text_copy", "discount", "unit_price", "recipe_scale",
 ]);
 export type ButtonActionKind = z.infer<typeof ButtonActionKindSchema>;
 
@@ -103,6 +104,12 @@ const allowedInputTypes: Record<ButtonActionKind, Record<string, ButtonInputType
   text_cleanup: { mode: "text", text: "text" },
   random_pick: { options: "text" },
   counter: { step: "text" },
+  qr_code: { text: "text" },
+  directions: { destination: "text", origin: "text", mode: "text" },
+  text_copy: { text: "text" },
+  discount: { price: "text", rate: "text" },
+  unit_price: { priceA: "text", quantityA: "text", priceB: "text", quantityB: "text", unit: "text" },
+  recipe_scale: { baseServings: "text", targetServings: "text", ingredients: "text" },
 };
 
 const listSchema = (minimum: number) => z.string().trim().min(1).max(200).refine((value) => {
@@ -123,10 +130,18 @@ const fixedValueSchemas: Record<ButtonActionKind, Record<string, z.ZodType>> = {
   text_cleanup: { mode: z.enum(["trim", "deduplicate"]), text: z.string().trim().min(1).max(200) },
   random_pick: { options: listSchema(2) },
   counter: { step: z.number().int().min(1).max(1000) },
+  qr_code: { text: z.string().trim().min(1).max(200) },
+  directions: { destination: z.string().trim().min(1).max(100), origin: z.string().trim().min(1).max(100), mode: z.enum(["transit", "driving", "walking", "bicycling"]) },
+  text_copy: { text: z.string().trim().min(1).max(200) },
+  discount: { price: boundedNumber.int().min(0), rate: z.number().finite().min(0).max(100) },
+  unit_price: { priceA: boundedNumber.int().min(0), quantityA: z.number().finite().min(0.001).max(1e9), priceB: boundedNumber.int().min(0), quantityB: z.number().finite().min(0.001).max(1e9), unit: z.enum(["g", "ml", "개"]) },
+  recipe_scale: { baseServings: z.number().finite().min(0.1).max(1000), targetServings: z.number().finite().min(0.1).max(1000), ingredients: listSchema(1) },
 };
 const essentialInputs: Partial<Record<ButtonActionKind, string[]>> = {
   weather: ["city"], bus_schedule: ["departure", "arrival"], checklist: ["items"], timer: ["minutes"],
   dday: ["date"], split_bill: ["amount", "people"], unit_convert: ["value", "from", "to"], random_pick: ["options"],
+  qr_code: ["text"], directions: ["destination"], text_copy: ["text"], discount: ["price", "rate"],
+  unit_price: ["priceA", "quantityA", "priceB", "quantityB"], recipe_scale: ["baseServings", "targetServings", "ingredients"],
 };
 const unitDimensions: Record<string, string> = {
   mm: "length", cm: "length", m: "length", km: "length", g: "mass", kg: "mass", celsius: "temperature", fahrenheit: "temperature",

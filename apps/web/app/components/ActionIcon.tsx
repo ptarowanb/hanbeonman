@@ -13,6 +13,12 @@ const shapes: Record<ButtonActionKind, ReactNode> = {
   text_cleanup: <><path d="M4 4h16M4 9h16M4 14h10M4 19h8m6-6v8m-4-4h8"/></>,
   random_pick: <><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M7 7h.01M17 7h.01M12 12h.01M7 17h.01M17 17h.01" strokeWidth="3"/></>,
   counter: <><circle cx="12" cy="12" r="9"/><path d="M8 12h8m-4-4v8"/></>,
+  qr_code: <><rect x="3" y="3" width="6" height="6" rx="1"/><rect x="15" y="3" width="6" height="6" rx="1"/><rect x="3" y="15" width="6" height="6" rx="1"/><path d="M15 15h3v3h3v3h-6v-3m6-6v1M12 3v3m0 6H3m9 3v6"/></>,
+  directions: <><path d="M12 2 22 12 12 22 2 12Z"/><path d="M8 15v-3a2 2 0 0 1 2-2h6m-3-3 3 3-3 3"/></>,
+  text_copy: <><rect x="8" y="7" width="12" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2m6-6h4m-4 4h4"/></>,
+  discount: <><circle cx="7" cy="7" r="3"/><circle cx="17" cy="17" r="3"/><path d="m5 19 14-14"/></>,
+  unit_price: <><path d="M12 3v18m-7 0h14M3 7h18M6 7l-4 8h8L6 7Zm12 0-4 8h8l-4-8Z"/></>,
+  recipe_scale: <><path d="M7 10H3a4 4 0 0 1 3-7 5 5 0 0 1 9 0 4 4 0 1 1 4 7h-2m-10 0v10h10V10M7 17h10M10 10v3m4-3v3"/></>,
 };
 
 export default function ActionIcon({ kind, size = 22 }: { kind: ButtonActionKind; size?: number }) {

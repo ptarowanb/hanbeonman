@@ -22,9 +22,9 @@ test("매번 입력하는 버튼은 다시 누르면 새 값을 받는다", asyn
   await expect(page.getByLabel("금액(원)", { exact:true })).toHaveValue("");
 });
 
-test("11종 생활 작업에서 선택하고 편집·검색·복제·삭제 복구한다", async ({ page }) => {
+test("등록된 생활 작업에서 선택하고 편집·검색·복제·삭제 복구한다", async ({ page }) => {
   await page.goto("/create");
-  await expect(page.getByRole("button", { name: /템플릿$/ })).toHaveCount(11);
+  await expect(page.getByRole("button", { name: /템플릿$/ })).toHaveCount(17);
   await page.getByRole("button", { name: "횟수 기록 템플릿" }).click();
   await page.getByLabel("버튼 이름", { exact: true }).fill("물 마시기");
   await page.getByRole("button", { name: "이 버튼 저장", exact: true }).click();

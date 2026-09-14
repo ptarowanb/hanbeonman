@@ -6,6 +6,9 @@ import { buttonToIntent, type GeneratedButton } from "./buttonStorage";
 import ActionFieldControl from "./ActionFieldControl";
 import RoutineRunner from "../routines/RoutineRunner";
 import UtilityRunner from "./UtilityRunner";
+import CalculatorRunner from "./CalculatorRunner";
+import SharingRunner from "./SharingRunner";
+import { scaleRecipe } from "./calculatorActions";
 import { WeatherResultCard, type WeatherApiResult } from "../weather/WeatherResultCard";
 
 export default function ButtonRunner({ button }: { button: GeneratedButton }) {
@@ -47,6 +50,10 @@ export default function ButtonRunner({ button }: { button: GeneratedButton }) {
     const candidate={...buttonToIntent(button),fixedInputs:values,requiredInputs:button.requiredInputs.filter(input=>!pending.some(p=>p.key===input.key))};
     const checked=parseButtonIntent(candidate);
     if(!checked.success){setError("입력값과 단위를 확인해주세요. 필요한 값을 모두 입력해주세요.");return;}
+    if(button.actionKind==="recipe_scale") {
+      try { scaleRecipe(Number(values.baseServings),Number(values.targetServings),String(values.ingredients??"")); }
+      catch(reason) {setError(reason instanceof Error?reason.message:"재료 목록을 확인해주세요.");return;}
+    }
     setError("");setInputs(values);setReady(true);
   }
   if(!ready)return <form className="library-run-inputs" onSubmit={start}><p>이번 실행에 필요한 정보만 알려주세요.</p>{pending.map(input=>{
@@ -55,6 +62,8 @@ export default function ButtonRunner({ button }: { button: GeneratedButton }) {
   })}{error&&<p role="alert" className="library-error">{error}</p>}<button type="submit" className="create-submit">이 정보로 실행</button></form>;
   if(button.actionKind==="weather")return <div aria-busy={loading}>{loading&&<p role="status">최신 날씨를 확인하고 있어요…</p>}{error&&<p role="alert" className="library-error">{error}</p>}{weather&&<WeatherResultCard result={weather}/>}<button className="create-secondary" type="button" disabled={loading} onClick={()=>setAttempt(value=>value+1)}>{error?"다시 시도":"날씨 새로고침"}</button></div>;
   if(button.actionKind==="timer"||button.actionKind==="checklist")return <RoutineRunner actionKind={button.actionKind} fixedInputs={inputs} storageKey={button.id}/>;
-  if(button.actionKind==="bus_schedule"||button.actionKind==="photo_compress")return <p>저장한 조건으로 도구를 열고 있어요.</p>;
+  if(button.actionKind==="bus_schedule"||button.actionKind==="photo_compress"||button.actionKind==="directions")return <p>저장한 조건으로 {button.actionKind==="directions"?"지도를":"도구를"} 열고 있어요.</p>;
+  if(button.actionKind==="qr_code"||button.actionKind==="text_copy")return <SharingRunner actionKind={button.actionKind} fixedInputs={inputs}/>;
+  if(button.actionKind==="discount"||button.actionKind==="unit_price"||button.actionKind==="recipe_scale")return <CalculatorRunner actionKind={button.actionKind} fixedInputs={inputs}/>;
   return <UtilityRunner actionKind={button.actionKind} fixedInputs={inputs} storageKey={button.id}/>;
 }
