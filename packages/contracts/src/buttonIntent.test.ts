@@ -2,6 +2,52 @@ import { describe, expect, it } from "vitest";
 import { ButtonIntentSchema, parseButtonIntent } from "./buttonIntent.js";
 
 describe("자연어 버튼 해석 계약", () => {
+  const draft = (actionKind: string, fixedInputs: Record<string, unknown>, requiredInputs: unknown[] = []) => ({
+    schemaVersion: "1.0", intent: "create_button", actionKind, title: "생활 버튼", summary: "반복 작업을 실행합니다.",
+    fixedInputs, requiredInputs, clarifyingQuestion: null,
+  });
+
+  it.each([
+    ["checklist", { items: "지갑\n열쇠" }], ["timer", { minutes: 25 }],
+    ["photo_compress", { maxEdge: 1920, quality: 0.8 }],
+    ["bus_schedule", { departure: "서울", arrival: "대전", weekday: 5, date: "2026-09-18" }],
+    ["dday", { date: "2026-09-18", event: "여행" }], ["split_bill", { amount: 35000, people: 3 }],
+    ["unit_convert", { value: 1500, from: "m", to: "km" }],
+    ["text_cleanup", { mode: "deduplicate" }], ["random_pick", { options: "한식\n중식" }], ["counter", { step: 1 }],
+  ])("%s 작업의 유효한 고정 조건을 허용한다", (actionKind, inputs) => {
+    expect(parseButtonIntent(draft(String(actionKind), inputs as Record<string, unknown>)).success).toBe(true);
+  });
+
+  it.each([
+    ["weather", { city: true }], ["weather", { city: "서".repeat(41) }],
+    ["timer", { minutes: "25" }], ["timer", { minutes: 0 }], ["timer", { minutes: 181 }], ["timer", { minutes: 1.5 }],
+    ["checklist", { items: Array.from({ length: 21 }, () => "짐").join("\n") }], ["checklist", { items: "지갑\n\n열쇠" }],
+    ["photo_compress", { maxEdge: 319 }], ["photo_compress", { quality: 1.1 }], ["photo_compress", { quality: false }],
+    ["bus_schedule", { departure: "서울", arrival: "대전", weekday: 7 }],
+    ["bus_schedule", { departure: "서울", arrival: "대전", date: "2026-02-30" }],
+    ["dday", { date: "2026-02-29" }], ["split_bill", { amount: -1, people: 3 }], ["split_bill", { amount: 1, people: 0 }], ["split_bill", { amount: 1.5, people: 2 }],
+    ["unit_convert", { value: 1, from: "kg", to: "m" }], ["unit_convert", { value: 1, from: "unknown", to: "m" }],
+    ["text_cleanup", { mode: "execute" }], ["random_pick", { options: "한 가지" }], ["random_pick", { options: "한식\n한식" }], ["counter", { step: 0 }],
+  ])("%s 작업의 잘못된 값과 타입을 거부한다", (actionKind, inputs) => {
+    expect(parseButtonIntent(draft(String(actionKind), inputs as Record<string, unknown>)).success).toBe(false);
+  });
+
+  it("프로토타입 키를 고정값과 실행 입력에 사용할 수 없다", () => {
+    for (const key of ["constructor", "prototype", "__proto__"]) {
+      expect(parseButtonIntent(draft("weather", JSON.parse(`{"city":"서울","${key}":"침입"}`))).success).toBe(false);
+      expect(parseButtonIntent(draft("weather", { city: "서울" }, [{ key, label: "값", type: "text", required: true }])).success).toBe(false);
+    }
+  });
+
+  it("누락한 도시·시간·경로는 실행 입력으로 받을 수 있다", () => {
+    expect(parseButtonIntent(draft("timer", {}, [{ key: "minutes", label: "시간(분)", type: "text", required: true }])).success).toBe(true);
+    expect(parseButtonIntent(draft("bus_schedule", {}, [
+      { key: "departure", label: "출발", type: "terminal", required: true },
+      { key: "arrival", label: "도착", type: "terminal", required: true },
+    ])).success).toBe(true);
+    expect(parseButtonIntent(draft("timer", {})).success).toBe(false);
+  });
+
   it("날씨 버튼 생성 초안을 허용한다", () => {
     const result = parseButtonIntent({
       schemaVersion: "1.0",

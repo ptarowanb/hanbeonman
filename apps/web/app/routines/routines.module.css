@@ -1,0 +1,27 @@
+.page { min-height: 100vh; padding-bottom: 70px; }
+.intro { max-width: 800px; padding: 60px 0 35px; }
+.intro h1 { font-size: clamp(2.2rem, 6vw, 4.5rem); line-height: 1.14; }
+.intro p { color: #53626c; }
+.tool { width: min(100%, 820px); padding: 30px; border: 2px solid var(--ink); border-radius: 24px; background: var(--cream); }
+.choices, .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.choices { margin-bottom: 24px; }
+.primary, .secondary { min-height: 48px; padding: 10px 18px; border: 2px solid var(--ink); border-radius: 999px; font: inherit; font-size: .88rem; font-weight: 800; cursor: pointer; }
+.primary { color: white; background: var(--orange); }
+.secondary { color: var(--ink); background: var(--yellow); }
+.primary:disabled, .secondary:disabled { opacity: .5; cursor: not-allowed; }
+.field { display: block; margin-bottom: 18px; font-weight: 800; }
+.field input, .field textarea { display: block; width: 100%; min-height: 48px; margin-top: 8px; padding: 12px; border: 1px solid var(--ink); border-radius: 8px; font: inherit; background: white; color: var(--ink); }
+.field textarea { min-height: 145px; resize: vertical; }
+.runner { padding: 20px; margin-top: 20px; min-width: 0; border: 1px solid #c5ccc9; border-radius: 16px; background: white; }
+.runner p { margin-top: 0; }
+.items { list-style: none; padding: 0; margin: 20px 0; }
+.items label { display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 8px 0; cursor: pointer; }
+.items input { flex: 0 0 auto; width: 22px; height: 22px; accent-color: var(--orange); }
+.items span { overflow-wrap: anywhere; }
+.checked span { text-decoration: line-through; color: #66756b; }
+.progress { width: 100%; height: 12px; accent-color: var(--orange); }
+.clock { display: block; font-size: clamp(2.5rem, 12vw, 5rem); font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.4; }
+.help { margin-top: 14px !important; color: #53626c; font-size: .82rem; }
+.error { color: #9d2d15; font-size: .86rem; font-weight: 700; }
+.tool button:focus-visible, .tool input:focus-visible, .tool textarea:focus-visible, .runner button:focus-visible, .runner input:focus-visible { outline: 3px solid var(--orange); outline-offset: 3px; }
+@media (max-width: 480px) { .tool { padding: 18px; } .runner { padding: 16px; } .intro { padding-top: 35px; } }
